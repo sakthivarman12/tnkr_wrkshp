@@ -114,15 +114,7 @@
 </head>
 <body>
  
-<!-- Config Banner (shown if no Supabase credentials) -->
-<div id="config-banner" style="display:none">
-  <h2>🔧 Supabase Setup Required</h2>
-  <p>Enter your Supabase Project URL and Anon Key to connect your database. These are found in your Supabase project under Settings → API.</p>
-  <input id="cfg-url" placeholder="https://xxxx.supabase.co" type="url">
-  <input id="cfg-key" placeholder="eyJhbGci... (anon public key)" type="text">
-  <button class="btn btn-primary" style="padding:10px 24px;font-size:13px" onclick="saveConfig()">Connect to Supabase</button>
-  <p style="font-size:11px;color:#6b6a67">Credentials are saved locally in your browser.</p>
-</div>
+
  
 <div id="loading-overlay"><div class="spinner"></div></div>
 <div id="toast"></div>
