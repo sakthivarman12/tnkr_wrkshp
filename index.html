@@ -166,6 +166,8 @@
       <div class="nav-item" onclick="setView('board','AP')"><span class="nav-dot" style="background:#378ADD"></span>Awaiting Parts</div>
       <div class="nav-item" onclick="setView('board','NA')"><span class="nav-dot" style="background:#888780"></span>Not Approved</div>
       <div class="nav-item" onclick="setView('board','AWCUSA')"><span class="nav-dot" style="background:#E24B4A"></span>AWCUSA</div>
+      <div class="nav-item" onclick="setView('board','PTBO')"><span class="nav-dot" style="background:#D85A30"></span>Parts Backorder</div>
+      <div class="nav-item" onclick="setView('board','RNC')"><span class="nav-dot" style="background:#639922"></span>Ready/Collect</div>
       <div class="nav-section">Reports</div>
       <div class="nav-item" onclick="setView('list','all')"><span class="nav-dot" style="background:#639922"></span>List View</div>
       <div class="nav-section">Advisors</div>
@@ -174,6 +176,8 @@
       <div class="nav-item" onclick="setAdvisor('SHARUKH')"><span class="nav-dot" style="background:#1D9E75"></span>Sharukh</div>
       <div class="nav-item" onclick="setAdvisor('GANESH')"><span class="nav-dot" style="background:#D4537E"></span>Ganesh</div>
       <div class="nav-item" onclick="setAdvisor('SHAHITH')"><span class="nav-dot" style="background:#BA7517"></span>Shahith</div>
+      <div class="nav-item" onclick="setAdvisor('ANANTH')"><span class="nav-dot" style="background:#7777CC"></span>Ananth</div>
+      <div class="nav-item" onclick="setAdvisor('ABINASH')"><span class="nav-dot" style="background:#558855"></span>Abinash</div>
       <div style="padding:16px;border-top:0.5px solid var(--color-border-tertiary);margin-top:auto">
         <button class="btn" style="width:100%;font-size:11px" onclick="showConfig()">⚙ DB Settings</button>
       </div>
@@ -248,8 +252,18 @@
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label class="form-label">Job Card (JC)</label>
-          <input class="form-input" id="f-jc" placeholder="MMP-J003xxx">
+          <label class="form-label">Job Card No</label>
+          <input class="form-input" id="f-jc" placeholder="MMP-J003xxx or 1234">
+        </div>
+        <div class="form-group">
+          <label class="form-label">JC Date</label>
+          <input class="form-input" type="date" id="f-jc-date">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Invoice No</label>
+          <input class="form-input" id="f-invoice-no" placeholder="TNKC/2025-26/xxx">
         </div>
         <div class="form-group">
           <label class="form-label">Type</label>
@@ -354,7 +368,7 @@ function exportToExcel() {
   const data = getFiltered();
   if (!data.length) { toast('No tickets to export'); return; }
 
-  const headers = ['ID','Date','Customer','Mobile','Reg No','Model','Type','Status','Advisor','Parts (₹)','Labour (₹)','Total (₹)','Insurance','Location','Remarks','JC'];
+  const headers = ['ID','Job Card','JC Date','Invoice No','Date','Customer','Mobile','Reg No','Model','Type','Status','Advisor','Parts (₹)','Labour (₹)','Total (₹)','Insurance','Location','Section','Remarks'];
   const STATUS_LABELS = {
     WIP:'In Progress', AP:'Awaiting Parts', NA:'Not Approved',
     AWCUSA:'Awaiting Customer', AWINSA:'Awaiting Insurance',
@@ -363,10 +377,10 @@ function exportToExcel() {
   };
 
   const rows = data.map(t => [
-    t.id, t.inDate || '', t.customer, t.mobile || '', t.reg, t.model,
+    t.id, t.jc || '', t.jcDate || '', t.invoiceNo || '', t.inDate || '', t.customer, t.mobile || '', t.reg, t.model,
     t.type, STATUS_LABELS[t.status] || t.status, t.advisor,
     t.parts || 0, t.labour || 0, (t.parts || 0) + (t.labour || 0),
-    t.ins || '', t.location || 'IN', t.remarks || '', t.jc || ''
+    t.ins || '', t.location || 'IN', t.section || '', t.remarks || ''
   ]);
 
   // Build CSV (Excel-compatible with BOM for UTF-8 currency symbols)
@@ -452,6 +466,7 @@ const COLUMNS = [
   { key: 'AWINSA', label: 'Awaiting Insurance' },
   { key: 'AWCUSA', label: 'Awaiting Customer' },
   { key: 'NA',     label: 'Not Approved' },
+  { key: 'PTBO',   label: 'Parts Backorder' },
   { key: 'RNC',    label: 'Ready / Collect' },
 ];
  
@@ -499,6 +514,9 @@ function normalizeRow(r) {
     id: r.id,
     inDate: r.in_date || '',
     jc: r.jc || '',
+    jcDate: r.jc_date || '',
+    invoiceNo: r.invoice_no || '',
+    invoiceDate: r.invoice_date || '',
     customer: r.customer || '',
     mobile: r.mobile || '',
     reg: r.reg || '',
@@ -511,6 +529,8 @@ function normalizeRow(r) {
     labour: r.labour_est || 0,
     ins: r.insurance || '',
     location: r.location || 'IN',
+    section: r.section || 'Active',
+    surveyor: r.surveyor || '',
   };
 }
  
@@ -520,6 +540,9 @@ function toRow(t) {
     id: t.id,
     in_date: t.inDate || null,
     jc: t.jc || '',
+    jc_date: t.jcDate || null,
+    invoice_no: t.invoiceNo || '',
+    invoice_date: t.invoiceDate || null,
     customer: t.customer,
     mobile: t.mobile || '',
     reg: t.reg,
@@ -532,6 +555,8 @@ function toRow(t) {
     labour_est: t.labour || 0,
     insurance: t.ins || '',
     location: t.location || 'IN',
+    section: t.section || 'Active',
+    surveyor: t.surveyor || '',
   };
 }
  
@@ -626,7 +651,8 @@ function renderBoard(data) {
       </div>
       <div class="col-cards">${cards.length ? cards.map(t => `
         <div class="card" onclick="openDetail('${t.id}')">
-          <div class="card-id">${t.id}${t.jc ? ' · ' + t.jc : ''}</div>
+          <div class="card-id">${t.id}</div>
+          ${t.jc ? \`<div style="font-size:10px;font-family:var(--font-mono);color:#378ADD;margin-bottom:2px;font-weight:500">\${t.jc}</div>\` : ''}
           <div class="card-title">${t.customer}</div>
           <div class="card-reg">${t.reg} · ${t.model}</div>
           <div class="card-footer">
@@ -643,10 +669,11 @@ function renderBoard(data) {
 function renderList(data) {
   return `<div class="list-view"><table class="list-table">
     <thead><tr>
-      <th>ID</th><th>Date</th><th>Customer</th><th>Reg No</th><th>Model</th><th>Type</th><th>Status</th><th>Advisor</th><th>Parts (₹)</th><th>Insurance</th>
+      <th>ID</th><th>Job Card</th><th>Date</th><th>Customer</th><th>Reg No</th><th>Model</th><th>Type</th><th>Status</th><th>Advisor</th><th>Parts (₹)</th><th>Insurance</th>
     </tr></thead>
     <tbody>${data.map(t => `<tr onclick="openDetail('${t.id}')" style="cursor:pointer">
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)">${t.id}</td>
+      <td style="font-family:var(--font-mono);font-size:11px;color:#378ADD;font-weight:500">${t.jc || '—'}</td>
       <td style="font-size:11px;white-space:nowrap">${t.inDate || '-'}</td>
       <td style="font-weight:500">${t.customer}</td>
       <td style="font-family:var(--font-mono);font-size:11px">${t.reg}</td>
@@ -678,15 +705,27 @@ function openDetail(id) {
   document.getElementById('dp-id').textContent = `${t.id} · ${t.jc || 'No job card'}`;
   document.getElementById('dp-title').textContent = `${t.customer} — ${t.model}`;
   document.getElementById('dp-body').innerHTML = `
-    <div style="margin-bottom:14px">${statusBadge(t.status)} ${typeBadge(t.type)}</div>
+    <div style="margin-bottom:14px">${statusBadge(t.status)} ${typeBadge(t.type)} ${t.section ? \`<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--color-background-secondary);color:var(--color-text-tertiary)">\${t.section}</span>\` : ''}</div>
+
+    <div style="background:var(--color-background-secondary);border-radius:8px;padding:14px;margin-bottom:14px;border:0.5px solid var(--color-border-tertiary)">
+      <div style="font-size:11px;font-weight:600;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">📋 Job Card Details</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Job Card No</div><div style="font-size:13px;font-weight:600;font-family:var(--font-mono);color:var(--color-text-primary)">${t.jc || '—'}</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">JC Date</div><div style="font-size:12px;font-family:var(--font-mono)">${t.jcDate || t.inDate || '—'}</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Invoice No</div><div style="font-size:12px;font-family:var(--font-mono)">${t.invoiceNo || '—'}</div></div>
+        <div><div style="font-size:10px;color:var(--color-text-tertiary)">Invoice Date</div><div style="font-size:12px;font-family:var(--font-mono)">${t.invoiceDate || '—'}</div></div>
+      </div>
+    </div>
+
     <div class="detail-field"><div class="detail-label">Registration</div><div class="detail-value" style="font-family:var(--font-mono)">${t.reg || 'N/A'}</div></div>
     <div class="detail-field"><div class="detail-label">In Date</div><div class="detail-value">${t.inDate || 'Unknown'}</div></div>
-    <div class="detail-field"><div class="detail-label">Mobile</div><div class="detail-value">${t.mobile || '—'}</div></div>
+    <div class="detail-field"><div class="detail-label">Mobile</div><div class="detail-value">${t.mobile ? \`<a href="tel:\${t.mobile}" style="color:#378ADD;text-decoration:none">\${t.mobile}</a>\` : '—'}</div></div>
     <div class="detail-field"><div class="detail-label">Advisor</div><div class="detail-value">${t.advisor}</div></div>
     <div class="detail-field"><div class="detail-label">Insurance</div><div class="detail-value">${t.ins || '—'}</div></div>
-    <div class="detail-field"><div class="detail-label">Location</div><div class="detail-value">${t.location || 'IN'}</div></div>
+    ${t.surveyor ? \`<div class="detail-field"><div class="detail-label">Surveyor</div><div class="detail-value">\${t.surveyor}</div></div>\` : ''}
+    <div class="detail-field"><div class="detail-label">Location</div><div class="detail-value"><span style="padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600;background:\${t.location==='IN'?'#EAF3DE':t.location==='OUT'?'#FCEBEB':'#FAEEDA'};color:\${t.location==='IN'?'#3B6D11':t.location==='OUT'?'#A32D2D':'#854F0B'}">\${t.location||'IN'}</span></div></div>
     <hr class="detail-divider">
-    <div class="detail-field"><div class="detail-label">Remarks</div><div class="detail-value">${t.remarks || '—'}</div></div>
+    <div class="detail-field"><div class="detail-label">Remarks</div><div class="detail-value" style="line-height:1.5">${t.remarks || '—'}</div></div>
     <hr class="detail-divider">
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px">
@@ -754,7 +793,7 @@ function closeDetail() {
 function openNewTicket() {
   editingId = null;
   document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
-  ['f-customer','f-mobile','f-reg','f-model','f-jc','f-remarks','f-ins','f-parts','f-labour'].forEach(id => {
+  ['f-customer','f-mobile','f-reg','f-model','f-jc','f-jc-date','f-invoice-no','f-remarks','f-ins','f-parts','f-labour'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -777,6 +816,9 @@ async function submitTicket() {
     id: 'VEH-' + Date.now(),
     inDate: document.getElementById('f-date').value || today,
     jc: document.getElementById('f-jc').value.trim(),
+    jcDate: document.getElementById('f-jc-date').value || null,
+    invoiceNo: document.getElementById('f-invoice-no').value.trim(),
+    invoiceDate: null,
     customer: customer.toUpperCase(),
     mobile: document.getElementById('f-mobile').value.trim(),
     reg: reg.toUpperCase(),
@@ -789,6 +831,8 @@ async function submitTicket() {
     labour: parseInt(document.getElementById('f-labour').value) || 0,
     ins: document.getElementById('f-ins').value.trim(),
     location: document.getElementById('f-location').value,
+    section: 'Active',
+    surveyor: '',
   };
  
   document.getElementById('submit-btn').disabled = true;
