@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OMR Service — Workshop Management</title>
+<title>Tinkr Auto OMR Service — Workshop Management</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -21,9 +21,43 @@
     --border-radius-md: 6px;
     --border-radius-lg: 10px;
   }
+  /* Dark mode */
+  body.dark-mode {
+    --color-background-primary: #1c1b1a;
+    --color-background-secondary: #252422;
+    --color-background-tertiary: #2c2b29;
+    --color-text-primary: #f0efed;
+    --color-text-secondary: #a8a7a3;
+    --color-text-tertiary: #6b6a67;
+    --color-border-secondary: #3a3936;
+    --color-border-tertiary: #302f2d;
+  }
+  body.dark-mode #loading-overlay { background: rgba(0,0,0,0.7); }
   body { font-family: var(--font-sans); }
   .app { display: flex; height: 100vh; min-height: 600px; background: var(--color-background-tertiary); }
-  .sidebar { width: 220px; flex-shrink: 0; background: var(--color-background-secondary); border-right: 0.5px solid var(--color-border-tertiary); display: flex; flex-direction: column; }
+  /* Sidebar collapsed */
+  .sidebar { width: 220px; flex-shrink: 0; background: var(--color-background-secondary); border-right: 0.5px solid var(--color-border-tertiary); display: flex; flex-direction: column; overflow: hidden; transition: width 0.22s cubic-bezier(.4,0,.2,1), border 0.22s; }
+  .sidebar.collapsed { width: 0 !important; border-right: none; }
+  .sidebar-hide-btn, .dark-toggle {
+    width: 28px; height: 28px;
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-primary);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    color: var(--color-text-secondary);
+    transition: background 0.1s;
+    flex-shrink: 0;
+    line-height: 1;
+    padding: 0;
+    font-family: var(--font-sans);
+  }
+  .sidebar-hide-btn:hover, .dark-toggle:hover { background: var(--color-background-secondary); color: var(--color-text-primary); }
+  .db-status { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--color-text-tertiary); }
+  .db-dot { width: 8px; height: 8px; border-radius: 50%; background: #888780; transition: background 0.4s; flex-shrink: 0; }
+  .db-dot.connected { background: #2ECC71; box-shadow: 0 0 6px #2ECC7166; }
+  .db-dot.error { background: #E24B4A; }
   .sidebar-logo { padding: 16px; border-bottom: 0.5px solid var(--color-border-tertiary); }
   .logo-text { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
   .logo-sub { font-size: 11px; color: var(--color-text-secondary); }
@@ -122,7 +156,7 @@
 <div class="app" id="app">
   <div class="sidebar">
     <div class="sidebar-logo">
-      <div class="logo-text">OMR Service</div>
+      <div class="logo-text">Tinkr Auto OMR Service</div>
       <div class="logo-sub">Workshop Management</div>
     </div>
     <div class="sidebar-nav">
@@ -148,12 +182,19 @@
  
   <div class="main">
     <div class="topbar">
+      <button class="sidebar-hide-btn" id="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
       <div class="topbar-title" id="page-title">All Active Tickets — Board</div>
+      <div class="db-status" id="db-status-indicator">
+        <span class="db-dot" id="db-dot"></span>
+        <span id="db-status-text">Connecting…</span>
+      </div>
       <input class="search-bar" type="text" placeholder="Search reg, customer, model..." id="search-input" oninput="renderContent()">
       <div class="view-toggle">
         <button class="view-btn active" id="vb" onclick="toggleView('board')">Board</button>
         <button class="view-btn" id="vl" onclick="toggleView('list')">List</button>
       </div>
+      <button class="dark-toggle" id="dark-toggle-btn" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
+      <button class="btn" onclick="exportToExcel()" title="Export to Excel">📥 Export</button>
       <button class="btn btn-primary" onclick="openNewTicket()">+ New Ticket</button>
     </div>
  
@@ -264,6 +305,89 @@
 </div>
  
 <script>
+// ─── SIDEBAR TOGGLE ────────────────────────────────────────────────────────────
+function toggleSidebar() {
+  const sidebar = document.querySelector('.sidebar');
+  const btn = document.getElementById('sidebar-toggle-btn');
+  sidebar.classList.toggle('collapsed');
+  btn.textContent = sidebar.classList.contains('collapsed') ? '▶' : '☰';
+}
+
+// ─── DARK MODE ─────────────────────────────────────────────────────────────────
+function toggleDark() {
+  document.body.classList.toggle('dark-mode');
+  const isDark = document.body.classList.contains('dark-mode');
+  document.getElementById('dark-toggle-btn').textContent = isDark ? '☀️' : '🌙';
+  localStorage.setItem('dark_mode', isDark ? '1' : '0');
+}
+(function applyDarkPref() {
+  if (localStorage.getItem('dark_mode') === '1') {
+    document.body.classList.add('dark-mode');
+    // defer btn update until DOM loaded
+    window.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('dark-toggle-btn');
+      if (btn) btn.textContent = '☀️';
+    });
+  }
+})();
+
+// ─── DB STATUS INDICATOR ───────────────────────────────────────────────────────
+function setDbStatus(state) {
+  // state: 'connecting' | 'connected' | 'error'
+  const dot = document.getElementById('db-dot');
+  const txt = document.getElementById('db-status-text');
+  if (!dot || !txt) return;
+  dot.className = 'db-dot';
+  if (state === 'connected') {
+    dot.classList.add('connected');
+    txt.textContent = 'DB Connected';
+  } else if (state === 'error') {
+    dot.classList.add('error');
+    txt.textContent = 'DB Error';
+  } else {
+    txt.textContent = 'Connecting…';
+  }
+}
+
+// ─── EXPORT TO EXCEL ──────────────────────────────────────────────────────────
+function exportToExcel() {
+  const data = getFiltered();
+  if (!data.length) { toast('No tickets to export'); return; }
+
+  const headers = ['ID','Date','Customer','Mobile','Reg No','Model','Type','Status','Advisor','Parts (₹)','Labour (₹)','Total (₹)','Insurance','Location','Remarks','JC'];
+  const STATUS_LABELS = {
+    WIP:'In Progress', AP:'Awaiting Parts', NA:'Not Approved',
+    AWCUSA:'Awaiting Customer', AWINSA:'Awaiting Insurance',
+    AWINSD:'Awaiting Inspection', RNC:'Ready/Collect',
+    AA:'Accident Adv', PTBO:'Parts BO', APBO:'Parts BO'
+  };
+
+  const rows = data.map(t => [
+    t.id, t.inDate || '', t.customer, t.mobile || '', t.reg, t.model,
+    t.type, STATUS_LABELS[t.status] || t.status, t.advisor,
+    t.parts || 0, t.labour || 0, (t.parts || 0) + (t.labour || 0),
+    t.ins || '', t.location || 'IN', t.remarks || '', t.jc || ''
+  ]);
+
+  // Build CSV (Excel-compatible with BOM for UTF-8 currency symbols)
+  const escape = v => {
+    const s = String(v);
+    return s.includes(',') || s.includes('"') || s.includes('\n')
+      ? '"' + s.replace(/"/g, '""') + '"'
+      : s;
+  };
+  const csv = [headers, ...rows].map(r => r.map(escape).join(',')).join('\r\n');
+  const BOM = '\uFEFF';
+  const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `OMR_Tickets_${new Date().toISOString().split('T')[0]}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('✓ Exported ' + data.length + ' tickets');
+}
+
 // ─── SUPABASE CONFIG ───────────────────────────────────────────────────────────
 // Option A: Hardcode your keys here (easiest for Vercel static deploy)
 const HARDCODED_URL = 'https://clijyfjegxqtfprlubnv.supabase.co';
@@ -296,6 +420,7 @@ function showConfig() {
  
 function initSupabase(url, key) {
   sb = supabase.createClient(url, key);
+  setDbStatus('connecting');
   loadTickets();
 }
  
@@ -335,7 +460,8 @@ async function loadTickets() {
   showLoading(true);
   const { data, error } = await sb.from('tickets').select('*').order('created_at', { ascending: false });
   showLoading(false);
-  if (error) { toast('❌ Load failed: ' + error.message); return; }
+  if (error) { setDbStatus('error'); toast('❌ Load failed: ' + error.message); return; }
+  setDbStatus('connected');
   tickets = (data || []).map(normalizeRow);
   renderContent();
 }
