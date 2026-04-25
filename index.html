@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Tinkr Auto OMR Service — Workshop Management</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://unpkg.com/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -148,7 +148,7 @@
 </head>
 <body>
  
-
+ 
  
 <div id="loading-overlay"><div class="spinner"></div></div>
 <div id="toast"></div>
@@ -326,7 +326,7 @@ function toggleSidebar() {
   sidebar.classList.toggle('collapsed');
   btn.textContent = sidebar.classList.contains('collapsed') ? '▶' : '☰';
 }
-
+ 
 // ─── DARK MODE ─────────────────────────────────────────────────────────────────
 function toggleDark() {
   document.body.classList.toggle('dark-mode');
@@ -341,7 +341,7 @@ function toggleDark() {
     if (btn) btn.textContent = '☀️';
   }
 })();
-
+ 
 // ─── DB STATUS INDICATOR ───────────────────────────────────────────────────────
 function setDbStatus(state) {
   // state: 'connecting' | 'connected' | 'error'
@@ -359,12 +359,12 @@ function setDbStatus(state) {
     txt.textContent = 'Connecting…';
   }
 }
-
+ 
 // ─── EXPORT TO EXCEL ──────────────────────────────────────────────────────────
 function exportToExcel() {
   const data = getFiltered();
   if (!data.length) { toast('No tickets to export'); return; }
-
+ 
   const headers = ['ID','Job Card','JC Date','Invoice No','Date','Customer','Mobile','Reg No','Model','Type','Status','Advisor','Parts (₹)','Labour (₹)','Total (₹)','Insurance','Location','Section','Remarks'];
   const STATUS_LABELS = {
     WIP:'In Progress', AP:'Awaiting Parts', NA:'Not Approved',
@@ -372,14 +372,14 @@ function exportToExcel() {
     AWINSD:'Awaiting Inspection', RNC:'Ready/Collect',
     AA:'Accident Adv', PTBO:'Parts BO', APBO:'Parts BO'
   };
-
+ 
   const rows = data.map(t => [
     t.id, t.jc || '', t.jcDate || '', t.invoiceNo || '', t.inDate || '', t.customer, t.mobile || '', t.reg, t.model,
     t.type, STATUS_LABELS[t.status] || t.status, t.advisor,
     t.parts || 0, t.labour || 0, (t.parts || 0) + (t.labour || 0),
     t.ins || '', t.location || 'IN', t.section || '', t.remarks || ''
   ]);
-
+ 
   // Build CSV (Excel-compatible with BOM for UTF-8 currency symbols)
   const escape = v => {
     const s = String(v);
@@ -398,7 +398,7 @@ function exportToExcel() {
   URL.revokeObjectURL(url);
   toast('✓ Exported ' + data.length + ' tickets');
 }
-
+ 
 // ─── SUPABASE CONFIG ───────────────────────────────────────────────────────────
 // Option A: Hardcode your keys here (easiest for Vercel static deploy)
 const HARDCODED_URL = 'https://clijyfjegxqtfprlubnv.supabase.co';
@@ -431,18 +431,25 @@ function showConfig() {
  
 function initSupabase(url, key) {
   try {
-    const supabaseLib = window.supabase || (window.supabaseJs && window.supabaseJs.createClient ? window.supabaseJs : null);
-    if (!supabaseLib || typeof supabaseLib.createClient !== 'function') {
+    // UMD build from unpkg exposes window.supabase.createClient
+    const createClient = (window.supabase && window.supabase.createClient)
+      ? window.supabase.createClient
+      : (typeof createClient !== 'undefined' ? createClient : null);
+ 
+    if (typeof createClient !== 'function' && !(window.supabase && window.supabase.createClient)) {
       setDbStatus('error');
-      toast('❌ Supabase library not loaded. Check your connection.');
+      toast('❌ Supabase library not ready. Reload the page.');
+      console.error('window.supabase:', window.supabase);
       return;
     }
-    sb = supabaseLib.createClient(url, key);
+ 
+    sb = window.supabase.createClient(url, key);
     setDbStatus('connecting');
     loadTickets();
   } catch (e) {
     setDbStatus('error');
     toast('❌ Supabase init failed: ' + e.message);
+    console.error('initSupabase error:', e);
   }
 }
  
@@ -726,7 +733,7 @@ function openDetail(id) {
   document.getElementById('dp-title').textContent = `${t.customer} — ${t.model}`;
   document.getElementById('dp-body').innerHTML = `
     <div style="margin-bottom:14px">${statusBadge(t.status)} ${typeBadge(t.type)} ${t.section ? \`<span style="font-size:10px;padding:2px 7px;border-radius:10px;background:var(--color-background-secondary);color:var(--color-text-tertiary)">\${t.section}</span>\` : ''}</div>
-
+ 
     <div style="background:var(--color-background-secondary);border-radius:8px;padding:14px;margin-bottom:14px;border:0.5px solid var(--color-border-tertiary)">
       <div style="font-size:11px;font-weight:600;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px">📋 Job Card Details</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
@@ -736,7 +743,7 @@ function openDetail(id) {
         <div><div style="font-size:10px;color:var(--color-text-tertiary)">Invoice Date</div><div style="font-size:12px;font-family:var(--font-mono)">${t.invoiceDate || '—'}</div></div>
       </div>
     </div>
-
+ 
     <div class="detail-field"><div class="detail-label">Registration</div><div class="detail-value" style="font-family:var(--font-mono)">${t.reg || 'N/A'}</div></div>
     <div class="detail-field"><div class="detail-label">In Date</div><div class="detail-value">${t.inDate || 'Unknown'}</div></div>
     <div class="detail-field"><div class="detail-label">Mobile</div><div class="detail-value">${t.mobile ? \`<a href="tel:\${t.mobile}" style="color:#378ADD;text-decoration:none">\${t.mobile}</a>\` : '—'}</div></div>
@@ -876,7 +883,8 @@ document.getElementById('new-modal').addEventListener('click', e => {
 });
  
 // ─── INIT ────────────────────────────────────────────────────────────────────────
-(function initApp() {
+// ─── INIT ────────────────────────────────────────────────────────────────────────
+function initApp() {
   const cfg = getConfig();
   if (!cfg.url || !cfg.key) {
     document.getElementById('config-banner').style.display = 'flex';
@@ -884,17 +892,26 @@ document.getElementById('new-modal').addEventListener('click', e => {
       <div class="stat-box" style="grid-column:1/-1;text-align:center;color:var(--color-text-secondary);font-size:12px;padding:16px">
         Connect your Supabase database to load tickets
       </div>`;
-  } else {
-    initSupabase(cfg.url, cfg.key);
+    return;
   }
+ 
+  // Poll until window.supabase is available (CDN may still be loading)
+  let attempts = 0;
+  function tryInit() {
+    if (window.supabase && typeof window.supabase.createClient === 'function') {
+      initSupabase(cfg.url, cfg.key);
+    } else if (attempts < 20) {
+      attempts++;
+      setTimeout(tryInit, 200);
+    } else {
+      setDbStatus('error');
+      toast('❌ Supabase failed to load. Check network/CDN.');
+    }
+  }
+  tryInit();
 }
-
-// Ensure both DOM and Supabase CDN script are ready before init
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initApp);
-} else {
-  initApp();
-}
+ 
+initApp();
 </script>
 </body>
 </html>
