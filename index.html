@@ -337,11 +337,8 @@ function toggleDark() {
 (function applyDarkPref() {
   if (localStorage.getItem('dark_mode') === '1') {
     document.body.classList.add('dark-mode');
-    // defer btn update until DOM loaded
-    window.addEventListener('DOMContentLoaded', () => {
-      const btn = document.getElementById('dark-toggle-btn');
-      if (btn) btn.textContent = '☀️';
-    });
+    const btn = document.getElementById('dark-toggle-btn');
+    if (btn) btn.textContent = '☀️';
   }
 })();
 
@@ -433,9 +430,20 @@ function showConfig() {
 }
  
 function initSupabase(url, key) {
-  sb = supabase.createClient(url, key);
-  setDbStatus('connecting');
-  loadTickets();
+  try {
+    const supabaseLib = window.supabase || (window.supabaseJs && window.supabaseJs.createClient ? window.supabaseJs : null);
+    if (!supabaseLib || typeof supabaseLib.createClient !== 'function') {
+      setDbStatus('error');
+      toast('❌ Supabase library not loaded. Check your connection.');
+      return;
+    }
+    sb = supabaseLib.createClient(url, key);
+    setDbStatus('connecting');
+    loadTickets();
+  } catch (e) {
+    setDbStatus('error');
+    toast('❌ Supabase init failed: ' + e.message);
+  }
 }
  
 // ─── STATE ─────────────────────────────────────────────────────────────────────
@@ -473,12 +481,24 @@ const COLUMNS = [
 // ─── DB FUNCTIONS ───────────────────────────────────────────────────────────────
 async function loadTickets() {
   showLoading(true);
-  const { data, error } = await sb.from('tickets').select('*').order('created_at', { ascending: false });
-  showLoading(false);
-  if (error) { setDbStatus('error'); toast('❌ Load failed: ' + error.message); return; }
-  setDbStatus('connected');
-  tickets = (data || []).map(normalizeRow);
-  renderContent();
+  try {
+    const { data, error } = await sb.from('tickets').select('*').order('created_at', { ascending: false });
+    showLoading(false);
+    if (error) {
+      setDbStatus('error');
+      toast('❌ Load failed: ' + error.message);
+      console.error('Supabase load error:', error);
+      return;
+    }
+    setDbStatus('connected');
+    tickets = (data || []).map(normalizeRow);
+    renderContent();
+  } catch (e) {
+    showLoading(false);
+    setDbStatus('error');
+    toast('❌ Connection failed: ' + e.message);
+    console.error('loadTickets exception:', e);
+  }
 }
  
 async function insertTicket(ticket) {
@@ -856,7 +876,7 @@ document.getElementById('new-modal').addEventListener('click', e => {
 });
  
 // ─── INIT ────────────────────────────────────────────────────────────────────────
-(function init() {
+(function initApp() {
   const cfg = getConfig();
   if (!cfg.url || !cfg.key) {
     document.getElementById('config-banner').style.display = 'flex';
@@ -867,7 +887,14 @@ document.getElementById('new-modal').addEventListener('click', e => {
   } else {
     initSupabase(cfg.url, cfg.key);
   }
-})();
+}
+
+// Ensure both DOM and Supabase CDN script are ready before init
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initApp);
+} else {
+  initApp();
+}
 </script>
 </body>
 </html>
