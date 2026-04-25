@@ -1,0 +1,503 @@
+
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans); }
+  .app { display: flex; height: 100vh; min-height: 600px; background: var(--color-background-tertiary); }
+  .sidebar { width: 220px; flex-shrink: 0; background: var(--color-background-secondary); border-right: 0.5px solid var(--color-border-tertiary); display: flex; flex-direction: column; }
+  .sidebar-logo { padding: 16px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .logo-text { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+  .logo-sub { font-size: 11px; color: var(--color-text-secondary); }
+  .sidebar-nav { padding: 8px 0; flex: 1; overflow-y: auto; }
+  .nav-section { padding: 12px 16px 4px; font-size: 11px; color: var(--color-text-tertiary); font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+  .nav-item { padding: 6px 16px; font-size: 13px; color: var(--color-text-secondary); cursor: pointer; display: flex; align-items: center; gap: 8px; border-radius: 0; transition: background 0.1s; }
+  .nav-item:hover { background: var(--color-background-primary); color: var(--color-text-primary); }
+  .nav-item.active { background: var(--color-background-primary); color: var(--color-text-primary); font-weight: 500; border-left: 2px solid #378ADD; }
+  .nav-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { height: 52px; background: var(--color-background-primary); border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; padding: 0 20px; gap: 12px; flex-shrink: 0; }
+  .topbar-title { font-size: 15px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+  .topbar-actions { display: flex; gap: 8px; align-items: center; }
+  .btn { padding: 6px 12px; font-size: 12px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); cursor: pointer; background: var(--color-background-primary); color: var(--color-text-primary); font-family: var(--font-sans); transition: background 0.1s; white-space: nowrap; }
+  .btn:hover { background: var(--color-background-secondary); }
+  .btn-primary { background: #378ADD; border-color: #378ADD; color: #fff; }
+  .btn-primary:hover { background: #185FA5; }
+  .search-bar { padding: 5px 10px; font-size: 12px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-secondary); color: var(--color-text-primary); font-family: var(--font-sans); width: 180px; }
+  .filter-bar { padding: 8px 20px; background: var(--color-background-primary); border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; gap: 8px; align-items: center; flex-shrink: 0; flex-wrap: wrap; }
+  .filter-chip { padding: 3px 10px; font-size: 11px; border: 0.5px solid var(--color-border-secondary); border-radius: 20px; cursor: pointer; color: var(--color-text-secondary); background: var(--color-background-primary); transition: all 0.1s; }
+  .filter-chip.active { background: #E6F1FB; border-color: #378ADD; color: #185FA5; font-weight: 500; }
+  .content { flex: 1; overflow: hidden; }
+  .board-view { display: flex; gap: 12px; padding: 16px 20px; overflow-x: auto; height: 100%; }
+  .column { flex-shrink: 0; width: 230px; display: flex; flex-direction: column; }
+  .col-header { padding: 8px 12px; border-radius: var(--border-radius-md) var(--border-radius-md) 0 0; display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
+  .col-title { font-size: 12px; font-weight: 500; }
+  .col-count { font-size: 11px; padding: 1px 6px; border-radius: 10px; }
+  .col-cards { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 12px; }
+  .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 12px; cursor: pointer; transition: box-shadow 0.1s, border-color 0.15s; }
+  .card:hover { border-color: var(--color-border-secondary); }
+  .card-id { font-size: 10px; color: var(--color-text-tertiary); margin-bottom: 3px; font-family: var(--font-mono); }
+  .card-title { font-size: 12px; font-weight: 500; color: var(--color-text-primary); margin-bottom: 6px; line-height: 1.4; }
+  .card-reg { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 6px; font-family: var(--font-mono); }
+  .card-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px; }
+  .badge { padding: 1px 7px; border-radius: 10px; font-size: 10px; font-weight: 500; }
+  .badge-mech { background: #E6F1FB; color: #185FA5; }
+  .badge-body { background: #EEEDFE; color: #3C3489; }
+  .badge-conv { background: #EAF3DE; color: #3B6D11; }
+  .advisor-pill { font-size: 10px; color: var(--color-text-tertiary); }
+  .list-view { padding: 16px 20px; overflow-y: auto; height: 100%; }
+  .list-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .list-table th { text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 500; color: var(--color-text-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); white-space: nowrap; background: var(--color-background-primary); position: sticky; top: 0; }
+  .list-table td { padding: 8px 12px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); vertical-align: middle; }
+  .list-table tr:hover td { background: var(--color-background-secondary); }
+  .status-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 500; }
+  .detail-panel { position: fixed; right: 0; top: 0; height: 100%; width: 400px; background: var(--color-background-primary); border-left: 0.5px solid var(--color-border-secondary); z-index: 100; overflow-y: auto; transform: translateX(100%); transition: transform 0.2s ease; }
+  .detail-panel.open { transform: translateX(0); }
+  .detail-header { padding: 16px 20px; border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; align-items: flex-start; gap: 12px; }
+  .detail-close { cursor: pointer; font-size: 18px; color: var(--color-text-tertiary); margin-left: auto; line-height: 1; padding: 2px; }
+  .detail-body { padding: 20px; }
+  .detail-field { margin-bottom: 14px; }
+  .detail-label { font-size: 11px; color: var(--color-text-tertiary); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
+  .detail-value { font-size: 13px; color: var(--color-text-primary); }
+  .detail-divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 16px 0; }
+  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); flex-shrink: 0; }
+  .stat-box { padding: 10px 16px; border-right: 0.5px solid var(--color-border-tertiary); }
+  .stat-box:last-child { border-right: none; }
+  .stat-num { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
+  .stat-label { font-size: 11px; color: var(--color-text-secondary); }
+  .view-toggle { display: flex; gap: 0; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); overflow: hidden; }
+  .view-btn { padding: 5px 10px; font-size: 12px; border: none; cursor: pointer; background: var(--color-background-primary); color: var(--color-text-secondary); font-family: var(--font-sans); transition: background 0.1s; }
+  .view-btn.active { background: var(--color-background-secondary); color: var(--color-text-primary); font-weight: 500; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay.open { display: flex; }
+  .modal { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-secondary); padding: 24px; width: 480px; max-height: 80vh; overflow-y: auto; }
+  .modal-title { font-size: 15px; font-weight: 500; margin-bottom: 20px; }
+  .form-group { margin-bottom: 14px; }
+  .form-label { display: block; font-size: 11px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .form-input { width: 100%; padding: 7px 10px; font-size: 13px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); font-family: var(--font-sans); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; border-top: 0.5px solid var(--color-border-tertiary); padding-top: 16px; }
+  .tag-ins { font-size: 10px; color: var(--color-text-secondary); background: var(--color-background-secondary); padding: 1px 6px; border-radius: 8px; }
+</style>
+
+<div class="app" id="app">
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-text">OMR Service</div>
+      <div class="logo-sub">Workshop Management</div>
+    </div>
+    <div class="sidebar-nav">
+      <div class="nav-section">Boards</div>
+      <div class="nav-item active" onclick="setView('board','all')"><span class="nav-dot" style="background:#378ADD"></span>All Tickets</div>
+      <div class="nav-item" onclick="setView('board','WIP')"><span class="nav-dot" style="background:#EF9F27"></span>In Progress</div>
+      <div class="nav-item" onclick="setView('board','AP')"><span class="nav-dot" style="background:#378ADD"></span>Awaiting Parts</div>
+      <div class="nav-item" onclick="setView('board','NA')"><span class="nav-dot" style="background:#888780"></span>Not Approved</div>
+      <div class="nav-item" onclick="setView('board','AWCUSA')"><span class="nav-dot" style="background:#E24B4A"></span>AWCUSA</div>
+      <div class="nav-section">Reports</div>
+      <div class="nav-item" onclick="setView('list','all')"><span class="nav-dot" style="background:#639922"></span>List View</div>
+      <div class="nav-item" onclick="setView('deliveries','all')"><span class="nav-dot" style="background:#D4537E"></span>Deliveries</div>
+      <div class="nav-section">Advisors</div>
+      <div class="nav-item" onclick="setAdvisor('BALA')"><span class="nav-dot" style="background:#534AB7"></span>Bala</div>
+      <div class="nav-item" onclick="setAdvisor('DINESH')"><span class="nav-dot" style="background:#D85A30"></span>Dinesh</div>
+      <div class="nav-item" onclick="setAdvisor('SHARUKH')"><span class="nav-dot" style="background:#1D9E75"></span>Sharukh</div>
+      <div class="nav-item" onclick="setAdvisor('GANESH')"><span class="nav-dot" style="background:#D4537E"></span>Ganesh</div>
+      <div class="nav-item" onclick="setAdvisor('SHAHITH')"><span class="nav-dot" style="background:#BA7517"></span>Shahith</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="page-title">All Active Tickets — Board</div>
+      <input class="search-bar" type="text" placeholder="Search reg, customer, model..." id="search-input" oninput="renderContent()">
+      <div class="view-toggle">
+        <button class="view-btn active" id="vb" onclick="toggleView('board')">Board</button>
+        <button class="view-btn" id="vl" onclick="toggleView('list')">List</button>
+      </div>
+      <button class="btn btn-primary" onclick="openNewTicket()">+ New Ticket</button>
+    </div>
+
+    <div class="stats-bar" id="stats-bar"></div>
+
+    <div class="filter-bar">
+      <span style="font-size:11px;color:var(--color-text-tertiary);font-weight:500;">Type:</span>
+      <div class="filter-chip active" onclick="setFilter('typeFilter','all',this)">All</div>
+      <div class="filter-chip" onclick="setFilter('typeFilter','Mechanical',this)">Mechanical</div>
+      <div class="filter-chip" onclick="setFilter('typeFilter','Bodyshop',this)">Bodyshop</div>
+      <div class="filter-chip" onclick="setFilter('typeFilter','Conversion',this)">Conversion</div>
+    </div>
+
+    <div class="content" id="main-content"></div>
+  </div>
+
+  <div class="detail-panel" id="detail-panel">
+    <div class="detail-header">
+      <div>
+        <div id="dp-id" style="font-size:11px;color:var(--color-text-tertiary);font-family:var(--font-mono);margin-bottom:4px;"></div>
+        <div id="dp-title" style="font-size:15px;font-weight:500;"></div>
+      </div>
+      <div class="detail-close" onclick="closeDetail()">✕</div>
+    </div>
+    <div class="detail-body" id="dp-body"></div>
+  </div>
+
+  <div class="modal-overlay" id="new-modal">
+    <div class="modal">
+      <div class="modal-title">Create New Ticket</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Customer Name</label>
+          <input class="form-input" id="f-customer" placeholder="e.g. Rajesh Kumar">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mobile</label>
+          <input class="form-input" id="f-mobile" placeholder="9XXXXXXXXX">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Registration No</label>
+          <input class="form-input" id="f-reg" placeholder="TN07XX0000">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Model</label>
+          <input class="form-input" id="f-model" placeholder="BMW 320D">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Type</label>
+          <select class="form-input" id="f-type">
+            <option>Mechanical</option>
+            <option>Bodyshop</option>
+            <option>Conversion</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Advisor</label>
+          <select class="form-input" id="f-advisor">
+            <option>BALA</option><option>DINESH</option><option>SHARUKH</option><option>GANESH</option><option>SHAHITH</option><option>ANANTH</option><option>ABINASH</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Parts Est. (₹)</label>
+          <input class="form-input" id="f-parts" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Labour Est. (₹)</label>
+          <input class="form-input" id="f-labour" placeholder="0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Remarks</label>
+        <input class="form-input" id="f-remarks" placeholder="Describe the issue...">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Insurance</label>
+          <input class="form-input" id="f-ins" placeholder="ICICI / Own Payment">
+        </div>
+        <div class="form-group">
+          <label class="form-label">In Date</label>
+          <input class="form-input" type="date" id="f-date">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="submitTicket()">Create Ticket</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STATUS_CONFIG = {
+  'WIP':    { label: 'In Progress',   bg: '#FAEEDA', color: '#854F0B', col: '#EF9F27' },
+  'AP':     { label: 'Awaiting Parts',bg: '#E6F1FB', color: '#185FA5', col: '#378ADD' },
+  'NA':     { label: 'Not Approved',  bg: '#F1EFE8', color: '#5F5E5A', col: '#888780' },
+  'AWCUSA': { label: 'Awaiting Cust', bg: '#FCEBEB', color: '#A32D2D', col: '#E24B4A' },
+  'AWINSA': { label: 'Awaiting Ins',  bg: '#EEEDFE', color: '#3C3489', col: '#7F77DD' },
+  'AWINSD': { label: 'Awaiting Insp', bg: '#FBEAF0', color: '#72243E', col: '#D4537E' },
+  'RNC':    { label: 'Ready / Collect',bg:'#EAF3DE', color: '#3B6D11', col: '#639922' },
+  'AA':     { label: 'Accident Adv',  bg: '#FAECE7', color: '#993C1D', col: '#D85A30' },
+  'PTBO':   { label: 'Parts BO',      bg: '#FCEBEB', color: '#A32D2D', col: '#E24B4A' },
+  'APBO':   { label: 'Parts BO',      bg: '#FCEBEB', color: '#A32D2D', col: '#E24B4A' },
+};
+
+let tickets = [
+  { id:'VEH-001', inDate:'12.01.2026', jc:'MMP-J003502', customer:'SURESH', mobile:'9444547200', reg:'TN31CQ9999', model:'CARENS', type:'Mechanical', status:'NA', advisor:'BALA', remarks:'Engine to be dismantled', parts:150000, labour:40000, ins:'', location:'IN' },
+  { id:'VEH-002', inDate:'', jc:'No JC', customer:'ARUN RAJ', mobile:'9442385434', reg:'TN07BL5781', model:'CRUZE', type:'Mechanical', status:'NA', advisor:'BALA', remarks:'Starting kit - Vehicle in Yard', parts:60000, labour:12000, ins:'', location:'IN' },
+  { id:'VEH-003', inDate:'', jc:'MMP-J002982', customer:'MALIK', mobile:'9043540837', reg:'PY01CQ5004', model:'AUDI Q3', type:'Mechanical', status:'AP', advisor:'BALA', remarks:'Battery, seat cover to be fixed, hood insulation billed', parts:0, labour:0, ins:'', location:'IN' },
+  { id:'VEH-004', inDate:'04.03.2026', jc:'1601', customer:'TRADERS ACHIEVERS TR', mobile:'7448880640', reg:'TN02BS7070', model:'BMW 320D', type:'Mechanical', status:'AWCUSA', advisor:'BALA', remarks:'All engine bed, tensioner assy', parts:262793, labour:34700, ins:'', location:'IN' },
+  { id:'VEH-005', inDate:'05.03.2026', jc:'', customer:'CHITRA', mobile:'8675998888', reg:'TN11BE0003', model:'FORTUNER', type:'Mechanical', status:'WIP', advisor:'BALA', remarks:'Suspension material (parts received)', parts:449096, labour:271390, ins:'', location:'IN' },
+  { id:'VEH-006', inDate:'13.03.2026', jc:'1625', customer:'RAJA', mobile:'9384588700', reg:'TN02BE9000', model:'BENZ GL 350D', type:'Mechanical', status:'NA', advisor:'BALA', remarks:'LH noise coming', parts:157867, labour:51800, ins:'', location:'IN' },
+  { id:'VEH-007', inDate:'18.03.2026', jc:'1637', customer:'LAKSHMI PRIYA', mobile:'7373752579', reg:'TN90L0090', model:'VOLVO V90', type:'Mechanical', status:'NA', advisor:'BALA', remarks:'Turbo assy - waiting for payment', parts:129332, labour:108800, ins:'', location:'IN' },
+  { id:'VEH-008', inDate:'30.03.2026', jc:'1676', customer:'RAJA', mobile:'9384588700', reg:'TN02BE9000', model:'BENZ ML 350D', type:'Mechanical', status:'WIP', advisor:'BALA', remarks:'EGR flange, sensor', parts:122000, labour:51200, ins:'', location:'IN' },
+  { id:'VEH-009', inDate:'16.04.2026', jc:'1731', customer:'GOWRAV', mobile:'9884218820', reg:'TN09BU2859', model:'VW VENTO', type:'Mechanical', status:'AP', advisor:'BALA', remarks:'Thermostat assy and service material', parts:13300, labour:5400, ins:'', location:'IN' },
+  { id:'VEH-010', inDate:'17.04.2026', jc:'1736', customer:'MANO BALAN', mobile:'9500094489', reg:'TN16B6999', model:'BMW 320D', type:'Mechanical', status:'WIP', advisor:'BALA', remarks:'Noise coming when switch on the AC', parts:0, labour:0, ins:'', location:'IN' },
+  { id:'VEH-011', inDate:'17.04.2026', jc:'1737', customer:'ARAVIND KRISHANAN', mobile:'9865666594', reg:'TN02BL8689', model:'VW POLO', type:'Mechanical', status:'NA', advisor:'BALA', remarks:'FR both tire fully worn-out', parts:0, labour:0, ins:'', location:'IN' },
+  { id:'VEH-012', inDate:'18.04.2026', jc:'1739', customer:'PAUL PARACKA', mobile:'8884406808', reg:'TN14AE0498', model:'SONET', type:'Mechanical', status:'AP', advisor:'BALA', remarks:'Tire-01', parts:0, labour:0, ins:'', location:'IN' },
+  { id:'VEH-013', inDate:'', jc:'MMP-J003565', customer:'MOHAMMED', mobile:'8190874517', reg:'TN09CE8193', model:'FIAT', type:'Bodyshop', status:'WIP', advisor:'DINESH', remarks:'Customer not taken vehicle - incomplete work', parts:0, labour:0, ins:'Own Payment', location:'IN' },
+  { id:'VEH-014', inDate:'14.01.2026', jc:'MMP-J003511', customer:'GANESHAN', mobile:'', reg:'TN07CS9463', model:'CIVIC', type:'Bodyshop', status:'RNC', advisor:'DINESH', remarks:'Ready for delivery', parts:0, labour:0, ins:'ICICI', location:'YARD' },
+  { id:'VEH-015', inDate:'19.03.2025', jc:'', customer:'BALAN', mobile:'9445821070', reg:'TN22BU3237', model:'ACCENT', type:'Bodyshop', status:'AP', advisor:'GANESH', remarks:'Multiple parts - door handles, beadings and locks ordered. Waiting for parts payment', parts:0, labour:0, ins:'Own Payment', location:'IN' },
+  { id:'VEH-016', inDate:'16.04.2025', jc:'', customer:'RIDVIK', mobile:'9025303160', reg:'TN37DW9779', model:'MG HECTOR', type:'Bodyshop', status:'AWCUSA', advisor:'SHARUKH', remarks:'RH portions - own payment - waiting for advance payment', parts:100000, labour:100000, ins:'Own Payment', location:'IN' },
+  { id:'VEH-017', inDate:'09.05.2025', jc:'', customer:'MANIKANDAN', mobile:'8825507166', reg:'TN22CT0099', model:'FORTUNER', type:'Bodyshop', status:'NA', advisor:'SHARUKH', remarks:'Front portions - customer approval', parts:100000, labour:100000, ins:'Own Payment', location:'IN' },
+  { id:'VEH-018', inDate:'05.11.2025', jc:'', customer:'R.S.SURIYA', mobile:'9884751333', reg:'TN09BE5005', model:'AUDI Q7', type:'Bodyshop', status:'AWINSA', advisor:'SHARUKH', remarks:'Roof, LH rear door denting - FC issue', parts:350000, labour:300000, ins:'HDFC', location:'IN' },
+  { id:'VEH-019', inDate:'11.11.2025', jc:'', customer:'SHIVAJI PRABAKAR', mobile:'9962245211', reg:'TN06W1009', model:'BMW 5 SERIES', type:'Bodyshop', status:'AP', advisor:'SHARUKH', remarks:'Tail lamp and diffuser billed', parts:0, labour:0, ins:'HDFC', location:'IN' },
+  { id:'VEH-020', inDate:'18.01.2025', jc:'', customer:'JAMILIAN', mobile:'9087637777', reg:'TN72AX0066', model:'BMW X1', type:'Bodyshop', status:'AWCUSA', advisor:'SHAHITH', remarks:'Engine to be dismantled', parts:0, labour:0, ins:'Own Payment', location:'IN' },
+  { id:'VEH-021', inDate:'20.12.2025', jc:'', customer:'JKR TEX', mobile:'9742666900', reg:'TN47BB4477', model:'LC PRADO', type:'Bodyshop', status:'WIP', advisor:'SHAHITH', remarks:'Interior works under process, seats', parts:0, labour:0, ins:'NEW INDIA', location:'IN' },
+  { id:'VEH-022', inDate:'01.02.2024', jc:'', customer:'ASHWIN', mobile:'8939848455', reg:'TN07DA0072', model:'BMW X5', type:'Bodyshop', status:'WIP', advisor:'SHARUKH', remarks:'Wheel alignment under process', parts:0, labour:0, ins:'Own Payment', location:'IN' },
+  { id:'VEH-023', inDate:'20.01.2026', jc:'', customer:'JKR TEX', mobile:'9742666900', reg:'TN57AQ7477', model:'E CLASS 250', type:'Bodyshop', status:'WIP', advisor:'SHAHITH', remarks:'Wheel alignment under process', parts:0, labour:0, ins:'ICICI', location:'IN' },
+  { id:'VEH-024', inDate:'22.12.2025', jc:'', customer:'SRINIVASAN', mobile:'8610458909', reg:'TN68S5555', model:'BMW 520D', type:'Bodyshop', status:'AP', advisor:'ANANTH', remarks:'Both headlights - waiting for customer approval', parts:0, labour:0, ins:'Own Payment', location:'IN' },
+  { id:'VEH-025', inDate:'18.02.2026', jc:'', customer:'RAJKUMAR', mobile:'9884149393', reg:'TN09CB0333', model:'TOYOTA INNOVA', type:'Bodyshop', status:'AP', advisor:'DINESH', remarks:'Cowel panel waiting', parts:0, labour:0, ins:'Own Payment', location:'IN' },
+  { id:'VEH-026', inDate:'23.02.2026', jc:'', customer:'VIJAYKUMAR', mobile:'', reg:'TN14AL1716', model:'BALENO', type:'Bodyshop', status:'AP', advisor:'DINESH', remarks:'Waiting for parts - 15 days still back order', parts:70000, labour:20000, ins:'NATIONAL', location:'IN' },
+  { id:'VEH-027', inDate:'16.02.2026', jc:'', customer:'JJ FEDRICK', mobile:'9952807006', reg:'URH0598', model:'DEFENDER', type:'Bodyshop', status:'RNC', advisor:'ANANTH', remarks:'Waiting for parts', parts:0, labour:0, ins:'Own Payment', location:'OUT' },
+  { id:'VEH-028', inDate:'16.03.2026', jc:'', customer:'CHANDRAN', mobile:'7299387232', reg:'TN07CA1000', model:'BENZ ML', type:'Bodyshop', status:'AWINSA', advisor:'DINESH', remarks:'Waiting for insurance approval', parts:0, labour:0, ins:'UNITED INDIA', location:'IN' },
+  { id:'VEH-029', inDate:'24.03.2026', jc:'', customer:'GEORGE', mobile:'6382402717', reg:'TN12AL9093', model:'ENDEAVOUR', type:'Bodyshop', status:'AP', advisor:'DINESH', remarks:'RH front power window switch billed', parts:0, labour:0, ins:'OWN PAYMENT', location:'IN' },
+  { id:'VEH-030', inDate:'25.03.2026', jc:'', customer:'VENKATESWARAN', mobile:'9444633528', reg:'PY055799', model:'XUV 500', type:'Bodyshop', status:'WIP', advisor:'DINESH', remarks:'Denting work in process', parts:10000, labour:150000, ins:'OWN PAYMENT', location:'IN' },
+  { id:'VEH-031', inDate:'26.03.2026', jc:'', customer:'YUVARAJ', mobile:'8667029892', reg:'TN11BS9887', model:'TATA NEXON EV', type:'Bodyshop', status:'AP', advisor:'DINESH', remarks:'Waiting for parts', parts:10000, labour:6000, ins:'NEW INDIA', location:'IN' },
+  { id:'VEH-032', inDate:'28.03.2026', jc:'', customer:'VIVEK NARAYANAN', mobile:'', reg:'TN13K0399', model:'HONDA WRV', type:'Bodyshop', status:'AP', advisor:'DINESH', remarks:'Waiting for parts', parts:5500, labour:0, ins:'OWN PAYMENT', location:'IN' },
+  { id:'VEH-033', inDate:'04.04.2026', jc:'', customer:'ISMAIL', mobile:'9962725879', reg:'TN14C3036', model:'SWIFT', type:'Bodyshop', status:'WIP', advisor:'DINESH', remarks:'Full body', parts:50000, labour:0, ins:'OWN PAYMENT', location:'IN' },
+  { id:'VEH-034', inDate:'06.04.2026', jc:'', customer:'CHRISANTON', mobile:'9790235199', reg:'TN72DX0599', model:'SKODA KUSHAQ', type:'Bodyshop', status:'AWINSA', advisor:'DINESH', remarks:'Survey done, initiation to be completed from customer', parts:200000, labour:25000, ins:'ICICI', location:'IN' },
+  { id:'VEH-035', inDate:'07.04.2026', jc:'', customer:'SIVAKUMAR (NATHAN)', mobile:'7502288777', reg:'PY01CS0999', model:'JAGUAR XF', type:'Bodyshop', status:'AWINSA', advisor:'DINESH', remarks:'Rear impact', parts:30000, labour:25000, ins:'OWN PAYMENT', location:'IN' },
+  { id:'VEH-036', inDate:'08.04.2026', jc:'1713', customer:'SRINATH', mobile:'7358539402', reg:'TN07DC2502', model:'RENAULT KIGER', type:'Bodyshop', status:'AP', advisor:'DINESH', remarks:'Vehicle with customer - front portion damages', parts:10000, labour:0, ins:'NEW INDIA', location:'OUT' },
+  { id:'VEH-037', inDate:'08.04.2026', jc:'', customer:'VASUDEVAN', mobile:'8300303021', reg:'TN24AR6601', model:'ELITE I20', type:'Bodyshop', status:'AWINSA', advisor:'DINESH', remarks:'Parts estimate pending - front portion damages', parts:100000, labour:20000, ins:'CHOLA', location:'IN' },
+  { id:'VEH-038', inDate:'09.04.2026', jc:'', customer:'PAVITHRA', mobile:'9994827111', reg:'TN07CZ5016', model:'CELERIO', type:'Bodyshop', status:'WIP', advisor:'DINESH', remarks:'Front windshield', parts:5000, labour:5000, ins:'', location:'IN' },
+  { id:'VEH-039', inDate:'09.04.2026', jc:'', customer:'TILAK CHITALE', mobile:'', reg:'LAMBO', model:'LAMBORGHINI', type:'Bodyshop', status:'WIP', advisor:'SHARUKH', remarks:'Work in progress', parts:0, labour:0, ins:'OWN PAYMENT', location:'IN' },
+  { id:'VEH-040', inDate:'10.04.2026', jc:'', customer:'BHARAT KUMAR', mobile:'9444402121', reg:'TN07CU8860', model:'WAGON R', type:'Bodyshop', status:'NA', advisor:'DINESH', remarks:'Accident repair', parts:3500, labour:0, ins:'', location:'IN' },
+  { id:'VEH-041', inDate:'11.04.2026', jc:'1722', customer:'MOHAMMED', mobile:'9790837555', reg:'TN22EE2983', model:'MG ASTOR', type:'Bodyshop', status:'AP', advisor:'GANESH', remarks:'Dicky rear bumper - waiting for parts advance', parts:15000, labour:0, ins:'TATA AIG', location:'IN' },
+  { id:'VEH-042', inDate:'15.04.2026', jc:'', customer:'RAVI KUMAR', mobile:'8012591221', reg:'TN23CM1381', model:'NISSAN SUNNY', type:'Bodyshop', status:'AWINSA', advisor:'GANESH', remarks:'Waiting for approval (full body painting)', parts:15000, labour:65000, ins:'SBI', location:'IN' },
+  { id:'VEH-043', inDate:'17.04.2026', jc:'', customer:'KAMALINI', mobile:'', reg:'TN58W4071', model:'INNOVA', type:'Bodyshop', status:'NA', advisor:'GANESH', remarks:'To be allotted', parts:0, labour:0, ins:'', location:'IN' },
+  { id:'VEH-044', inDate:'20.04.2026', jc:'', customer:'HARISH', mobile:'9600866443', reg:'PY01CX0005', model:'SKODA VRS', type:'Bodyshop', status:'NA', advisor:'GANESH', remarks:'Brake check, front bumper paint, RHS front door, LH quarter panel', parts:21000, labour:0, ins:'OWN PAYMENT', location:'IN' },
+  { id:'VEH-045', inDate:'20.04.2026', jc:'', customer:'SELVA GANESH', mobile:'9123590287', reg:'TN22DR5700', model:'INNOVA CRYSTA', type:'Bodyshop', status:'AWINSA', advisor:'DINESH', remarks:'Rear portion damages', parts:0, labour:0, ins:'OWN PAYMENT', location:'IN' },
+  { id:'VEH-046', inDate:'20.04.2026', jc:'', customer:'BABU', mobile:'8838616974', reg:'TN18H4235', model:'JAZZ', type:'Bodyshop', status:'WIP', advisor:'GANESH', remarks:'Full body painting outer only, alloy wheel painting and under chassis coating', parts:78000, labour:0, ins:'OWN PAYMENT', location:'IN' },
+  { id:'VEH-047', inDate:'27.05.2025', jc:'', customer:'JIBY', mobile:'9115550000', reg:'TN13U3939', model:'BMW 6GT', type:'Conversion', status:'AP', advisor:'SHARUKH', remarks:'Kit installation and alloy wheel', parts:0, labour:0, ins:'', location:'IN' },
+  { id:'VEH-048', inDate:'', jc:'', customer:'UNKNOWN', mobile:'9176799900', reg:'', model:'INNOVA HYCROSS', type:'Conversion', status:'AWCUSA', advisor:'SHARUKH', remarks:'Bodykit', parts:27000, labour:5000, ins:'', location:'IN' },
+  { id:'VEH-049', inDate:'05.07.2024', jc:'', customer:'DANIEL', mobile:'9940102314', reg:'PY01BU1001', model:'BMW X6', type:'Conversion', status:'WIP', advisor:'SHARUKH', remarks:'Seats', parts:800000, labour:300000, ins:'', location:'IN' },
+  { id:'VEH-050', inDate:'01.08.2025', jc:'', customer:'RAJASIMMON', mobile:'9500312835', reg:'TN74BB9000', model:'BMW 520D', type:'Conversion', status:'WIP', advisor:'SHARUKH', remarks:'Bodykit/steering/infotainment display', parts:450000, labour:0, ins:'', location:'IN' },
+  { id:'VEH-051', inDate:'22.03.2026', jc:'', customer:'GURUPRASAD', mobile:'9499020000', reg:'TN34BA8181', model:'BMW 530D', type:'Conversion', status:'WIP', advisor:'SHAHITH', remarks:'Work in progress', parts:250000, labour:120000, ins:'', location:'IN' },
+  { id:'VEH-052', inDate:'20.04.2026', jc:'1743', customer:'NARENDHAR', mobile:'7695833991', reg:'TN23DV7537', model:'VIRTUS', type:'Bodyshop', status:'WIP', advisor:'BALA', remarks:'Front bumper painting', parts:6500, labour:0, ins:'', location:'IN' },
+  { id:'VEH-053', inDate:'21.04.2026', jc:'1748', customer:'UMAR FAROOK', mobile:'9790530225', reg:'PY01CJ6394', model:'ETIOS', type:'Bodyshop', status:'NA', advisor:'BALA', remarks:'Outer body painting', parts:0, labour:0, ins:'', location:'IN' },
+];
+
+let currentView = 'board';
+let currentStatusFilter = 'all';
+let typeFilter = 'all';
+let advisorFilter = null;
+let nextId = tickets.length + 1;
+
+function setFilter(filterName, val, el) {
+  if (filterName === 'typeFilter') typeFilter = val;
+  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderContent();
+}
+
+function setView(view, statusFilter) {
+  currentView = view;
+  currentStatusFilter = statusFilter;
+  advisorFilter = null;
+  document.getElementById('vb').classList.toggle('active', view !== 'list' && view !== 'deliveries');
+  document.getElementById('vl').classList.toggle('active', view === 'list' || view === 'deliveries');
+  renderContent();
+}
+
+function setAdvisor(adv) {
+  advisorFilter = adv;
+  currentView = 'list';
+  currentStatusFilter = 'all';
+  document.getElementById('page-title').textContent = `Advisor: ${adv}`;
+  renderContent();
+}
+
+function toggleView(v) {
+  currentView = v;
+  document.getElementById('vb').classList.toggle('active', v === 'board');
+  document.getElementById('vl').classList.toggle('active', v === 'list');
+  renderContent();
+}
+
+function getFiltered() {
+  const q = (document.getElementById('search-input')||{}).value || '';
+  return tickets.filter(t => {
+    if (typeFilter !== 'all' && !t.type.toLowerCase().startsWith(typeFilter.toLowerCase())) return false;
+    if (advisorFilter && t.advisor !== advisorFilter) return false;
+    if (currentStatusFilter !== 'all' && currentStatusFilter !== 'deliveries' && t.status !== currentStatusFilter) return false;
+    if (q) {
+      const qq = q.toLowerCase();
+      return (t.customer+t.reg+t.model+t.remarks+t.id).toLowerCase().includes(qq);
+    }
+    return true;
+  });
+}
+
+const COLUMNS = [
+  { key: 'WIP',    label: 'In Progress' },
+  { key: 'AP',     label: 'Awaiting Parts' },
+  { key: 'AWINSA', label: 'Awaiting Insurance' },
+  { key: 'AWCUSA', label: 'Awaiting Customer' },
+  { key: 'NA',     label: 'Not Approved' },
+  { key: 'RNC',    label: 'Ready / Collect' },
+];
+
+function renderStats(data) {
+  const total = data.length;
+  const wip = data.filter(t => t.status === 'WIP').length;
+  const ap = data.filter(t => t.status === 'AP').length;
+  const totalParts = data.reduce((s,t) => s + (t.parts||0), 0);
+  document.getElementById('stats-bar').innerHTML = `
+    <div class="stat-box"><div class="stat-num">${total}</div><div class="stat-label">Total tickets</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#EF9F27">${wip}</div><div class="stat-label">In progress</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#378ADD">${ap}</div><div class="stat-label">Awaiting parts</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#639922">₹${(totalParts/100000).toFixed(1)}L</div><div class="stat-label">Parts value</div></div>
+  `;
+}
+
+function statusBadge(status) {
+  const s = STATUS_CONFIG[status] || { label: status, bg:'#F1EFE8', color:'#5F5E5A' };
+  return `<span class="status-badge" style="background:${s.bg};color:${s.color}">${s.label}</span>`;
+}
+
+function typeBadge(type) {
+  const cls = type === 'Mechanical' ? 'badge-mech' : type === 'Conversion' ? 'badge-conv' : 'badge-body';
+  return `<span class="badge ${cls}">${type}</span>`;
+}
+
+function renderBoard(data) {
+  return `<div class="board-view">${COLUMNS.map(col => {
+    const cards = data.filter(t => t.status === col.key);
+    const cfg = STATUS_CONFIG[col.key];
+    return `<div class="column">
+      <div class="col-header" style="background:${cfg.bg}20;border:0.5px solid ${cfg.col}40">
+        <span class="col-title" style="color:${cfg.color}">${col.label}</span>
+        <span class="col-count" style="background:${cfg.bg};color:${cfg.color}">${cards.length}</span>
+      </div>
+      <div class="col-cards">${cards.length ? cards.map(t => `
+        <div class="card" onclick="openDetail('${t.id}')">
+          <div class="card-id">${t.id} ${t.jc && t.jc !== 'No JC' ? '· '+t.jc : ''}</div>
+          <div class="card-title">${t.customer}</div>
+          <div class="card-reg">${t.reg} · ${t.model}</div>
+          <div class="card-footer">
+            ${typeBadge(t.type)}
+            <span class="advisor-pill">${t.advisor}</span>
+          </div>
+          ${t.parts > 0 ? `<div style="margin-top:6px;font-size:10px;color:var(--color-text-tertiary)">Parts: ₹${t.parts.toLocaleString()}</div>` : ''}
+        </div>`).join('') : `<div style="padding:16px;text-align:center;font-size:12px;color:var(--color-text-tertiary)">No tickets</div>`}
+      </div>
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function renderList(data) {
+  return `<div class="list-view"><table class="list-table">
+    <thead><tr>
+      <th>ID</th><th>Date</th><th>Customer</th><th>Reg No</th><th>Model</th><th>Type</th><th>Status</th><th>Advisor</th><th>Parts (₹)</th><th>Insurance</th>
+    </tr></thead>
+    <tbody>${data.map(t => `<tr onclick="openDetail('${t.id}')" style="cursor:pointer">
+      <td style="font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)">${t.id}</td>
+      <td style="font-size:11px;white-space:nowrap">${t.inDate||'-'}</td>
+      <td style="font-weight:500">${t.customer}</td>
+      <td style="font-family:var(--font-mono);font-size:11px">${t.reg}</td>
+      <td>${t.model}</td>
+      <td>${typeBadge(t.type)}</td>
+      <td>${statusBadge(t.status)}</td>
+      <td>${t.advisor}</td>
+      <td style="text-align:right">${t.parts > 0 ? t.parts.toLocaleString() : '-'}</td>
+      <td style="font-size:11px;color:var(--color-text-secondary)">${t.ins||'-'}</td>
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+function renderContent() {
+  const data = getFiltered();
+  renderStats(data);
+  const el = document.getElementById('main-content');
+  document.getElementById('page-title').textContent = advisorFilter
+    ? `Advisor: ${advisorFilter} (${data.length})`
+    : `Active Tickets — ${currentView === 'board' ? 'Board' : 'List'} (${data.length})`;
+  el.innerHTML = currentView === 'board' ? renderBoard(data) : renderList(data);
+}
+
+function openDetail(id) {
+  const t = tickets.find(x => x.id === id);
+  if (!t) return;
+  const s = STATUS_CONFIG[t.status] || { label: t.status, bg:'#F1EFE8', color:'#5F5E5A' };
+  document.getElementById('dp-id').textContent = `${t.id} · ${t.jc || 'No job card'}`;
+  document.getElementById('dp-title').textContent = `${t.customer} — ${t.model}`;
+  document.getElementById('dp-body').innerHTML = `
+    <div style="margin-bottom:14px">${statusBadge(t.status)} ${typeBadge(t.type)}</div>
+    <div class="detail-field"><div class="detail-label">Registration</div><div class="detail-value" style="font-family:var(--font-mono)">${t.reg||'N/A'}</div></div>
+    <div class="detail-field"><div class="detail-label">In Date</div><div class="detail-value">${t.inDate||'Unknown'}</div></div>
+    <div class="detail-field"><div class="detail-label">Mobile</div><div class="detail-value">${t.mobile||'—'}</div></div>
+    <div class="detail-field"><div class="detail-label">Advisor</div><div class="detail-value">${t.advisor}</div></div>
+    <div class="detail-field"><div class="detail-label">Insurance</div><div class="detail-value">${t.ins||'—'}</div></div>
+    <hr class="detail-divider">
+    <div class="detail-field"><div class="detail-label">Remarks</div><div class="detail-value">${t.remarks||'—'}</div></div>
+    <hr class="detail-divider">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px">
+        <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:2px">Parts Est.</div>
+        <div style="font-size:18px;font-weight:500">₹${(t.parts||0).toLocaleString()}</div>
+      </div>
+      <div style="background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px">
+        <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:2px">Labour Est.</div>
+        <div style="font-size:18px;font-weight:500">₹${(t.labour||0).toLocaleString()}</div>
+      </div>
+    </div>
+    <div style="margin-top:12px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);padding:12px">
+      <div style="font-size:11px;color:var(--color-text-tertiary);margin-bottom:2px">Total Est.</div>
+      <div style="font-size:20px;font-weight:500">₹${((t.parts||0)+(t.labour||0)).toLocaleString()}</div>
+    </div>
+    <hr class="detail-divider">
+    <div style="font-size:12px;color:var(--color-text-secondary);margin-bottom:8px">Change Status</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px">
+      ${Object.entries(STATUS_CONFIG).map(([k,v]) => `<button class="btn" style="font-size:11px;padding:4px 8px;${t.status===k?'border-color:#378ADD;color:#185FA5':''}" onclick="changeStatus('${id}','${k}')">${v.label}</button>`).join('')}
+    </div>
+  `;
+  document.getElementById('detail-panel').classList.add('open');
+}
+
+function changeStatus(id, status) {
+  const t = tickets.find(x => x.id === id);
+  if (t) { t.status = status; renderContent(); openDetail(id); }
+}
+
+function closeDetail() {
+  document.getElementById('detail-panel').classList.remove('open');
+}
+
+function openNewTicket() {
+  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('new-modal').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('new-modal').classList.remove('open');
+}
+
+function submitTicket() {
+  const id = 'VEH-' + String(++nextId).padStart(3,'0');
+  const today = new Date();
+  const dateStr = `${String(today.getDate()).padStart(2,'0')}.${String(today.getMonth()+1).padStart(2,'0')}.${today.getFullYear()}`;
+  tickets.push({
+    id, inDate: document.getElementById('f-date').value || dateStr,
+    jc: '', customer: document.getElementById('f-customer').value || 'Unknown',
+    mobile: document.getElementById('f-mobile').value,
+    reg: document.getElementById('f-reg').value,
+    model: (document.getElementById('f-model').value||'').toUpperCase(),
+    type: document.getElementById('f-type').value,
+    status: 'NA', advisor: document.getElementById('f-advisor').value,
+    remarks: document.getElementById('f-remarks').value,
+    parts: parseInt(document.getElementById('f-parts').value)||0,
+    labour: parseInt(document.getElementById('f-labour').value)||0,
+    ins: document.getElementById('f-ins').value, location: 'IN'
+  });
+  closeModal();
+  renderContent();
+}
+
+document.getElementById('new-modal').addEventListener('click', e => {
+  if (e.target === document.getElementById('new-modal')) closeModal();
+});
+
+renderContent();
+</script>
