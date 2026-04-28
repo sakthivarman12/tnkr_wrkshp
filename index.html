@@ -122,15 +122,55 @@
   .view-toggle { display: flex; gap: 0; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); overflow: hidden; }
   .view-btn { padding: 5px 10px; font-size: 12px; border: none; cursor: pointer; background: var(--color-background-primary); color: var(--color-text-secondary); font-family: var(--font-sans); transition: background 0.1s; }
   .view-btn.active { background: var(--color-background-secondary); color: var(--color-text-primary); font-weight: 500; }
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 200; align-items: center; justify-content: center; }
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 200; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 20px 0; }
   .modal-overlay.open { display: flex; }
-  .modal { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-secondary); padding: 24px; width: 480px; max-height: 80vh; overflow-y: auto; }
-  .modal-title { font-size: 15px; font-weight: 500; margin-bottom: 20px; }
-  .form-group { margin-bottom: 14px; }
+  .modal { background: var(--color-background-primary); border-radius: var(--border-radius-lg); border: 0.5px solid var(--color-border-secondary); padding: 0; width: 720px; max-width: 96vw; margin: auto; overflow: hidden; }
+  .modal-header { padding: 16px 20px; border-bottom: 0.5px solid var(--color-border-tertiary); display: flex; align-items: center; justify-content: space-between; background: var(--color-background-secondary); }
+  .modal-title { font-size: 15px; font-weight: 600; color: var(--color-text-primary); }
+  .modal-close-btn { width: 26px; height: 26px; border: 0.5px solid var(--color-border-secondary); border-radius: 6px; background: var(--color-background-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--color-text-secondary); }
+  .modal-close-btn:hover { background: var(--color-background-tertiary); }
+  .modal-body { padding: 20px; }
+  .modal-section { margin-bottom: 18px; }
+  .modal-section-title { font-size: 10px; font-weight: 600; color: var(--color-text-tertiary); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .form-group { margin-bottom: 12px; }
   .form-label { display: block; font-size: 11px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
-  .form-input { width: 100%; padding: 7px 10px; font-size: 13px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); font-family: var(--font-sans); }
+  .form-input { width: 100%; padding: 7px 10px; font-size: 13px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); font-family: var(--font-sans); transition: border-color 0.15s; }
+  .form-input:focus { outline: none; border-color: #378ADD; }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; border-top: 0.5px solid var(--color-border-tertiary); padding-top: 16px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .modal-footer { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 14px 20px; border-top: 0.5px solid var(--color-border-tertiary); background: var(--color-background-secondary); }
+  /* Insurance toggle */
+  .ins-toggle { display: flex; gap: 0; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); overflow: hidden; width: fit-content; }
+  .ins-btn { padding: 6px 18px; font-size: 12px; font-weight: 500; border: none; cursor: pointer; background: var(--color-background-secondary); color: var(--color-text-secondary); font-family: var(--font-sans); transition: all 0.15s; }
+  .ins-btn.active-yes { background: #2ECC71; color: #fff; }
+  .ins-btn.active-no { background: #E24B4A; color: #fff; }
+  /* Vehicle In/Out toggle */
+  .location-toggle { display: flex; gap: 8px; }
+  .loc-btn { flex: 1; padding: 8px; font-size: 12px; font-weight: 600; border: 1.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); cursor: pointer; background: var(--color-background-secondary); color: var(--color-text-secondary); font-family: var(--font-sans); text-align: center; transition: all 0.15s; }
+  .loc-btn.active-in { background: #EAF3DE; border-color: #639922; color: #3B6D11; }
+  .loc-btn.active-out { background: #FCEBEB; border-color: #E24B4A; color: #A32D2D; }
+  body.dark-mode .loc-btn.active-in { background: #1a2e0e; border-color: #639922; color: #8abe4a; }
+  body.dark-mode .loc-btn.active-out { background: #2e0e0e; border-color: #E24B4A; color: #e87070; }
+  /* Dropdown with add button */
+  .dropdown-with-add { display: flex; gap: 6px; align-items: center; }
+  .dropdown-with-add select { flex: 1; }
+  .add-dropdown-btn { flex-shrink: 0; padding: 7px 10px; font-size: 12px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-secondary); color: var(--color-text-primary); cursor: pointer; font-family: var(--font-sans); white-space: nowrap; }
+  .add-dropdown-btn:hover { background: #378ADD; border-color: #378ADD; color: #fff; }
+  /* Remarks history */
+  .remarks-history { background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 10px 12px; margin-bottom: 8px; max-height: 120px; overflow-y: auto; }
+  .remark-entry { padding: 6px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .remark-entry:last-child { border-bottom: none; }
+  .remark-meta { font-size: 10px; color: var(--color-text-tertiary); margin-bottom: 2px; }
+  .remark-text { font-size: 12px; color: var(--color-text-primary); }
+  .remarks-empty { font-size: 12px; color: var(--color-text-tertiary); font-style: italic; }
+  /* Inline add popup */
+  .inline-add-box { display: none; background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 12px; margin-top: 6px; }
+  .inline-add-box.open { display: block; }
+  .inline-add-box input { width: 100%; padding: 6px 10px; font-size: 13px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-secondary); color: var(--color-text-primary); font-family: var(--font-sans); margin-bottom: 8px; }
+  .inline-add-box-footer { display: flex; gap: 6px; justify-content: flex-end; }
+  /* Insurance detail box */
+  .ins-detail-box { display: none; padding: 14px; background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); margin-top: 10px; }
+  .ins-detail-box.open { display: block; }
   /* ── GRAFANA ANALYTICS DASHBOARD ─────────────────────────────────── */
   .analytics-view {
     height: 100%;
@@ -346,93 +386,239 @@
     <div class="detail-body" id="dp-body"></div>
   </div>
  
-  <!-- New Ticket Modal -->
+  <!-- New/Edit Job Card Modal -->
   <div class="modal-overlay" id="new-modal">
     <div class="modal">
-      <div class="modal-title">Create New Job Card</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Customer Name</label>
-          <input class="form-input" id="f-customer" placeholder="e.g. Rajesh Kumar">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Mobile</label>
-          <input class="form-input" id="f-mobile" placeholder="9XXXXXXXXX">
-        </div>
+      <div class="modal-header">
+        <div class="modal-title" id="modal-title-text">Create New Job Card</div>
+        <button class="modal-close-btn" onclick="closeModal()">✕</button>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Registration No</label>
-          <input class="form-input" id="f-reg" placeholder="TN07XX0000">
+      <div class="modal-body">
+
+        <!-- SECTION 1: JC Info -->
+        <div class="modal-section">
+          <div class="modal-section-title">📋 Job Card Details</div>
+          <div class="form-row-3">
+            <div class="form-group">
+              <label class="form-label">JC Date</label>
+              <input class="form-input" type="date" id="f-jc-date">
+            </div>
+            <div class="form-group">
+              <label class="form-label">JC Number</label>
+              <input class="form-input" id="f-jc" placeholder="MMP-J003xxx">
+            </div>
+            <div class="form-group">
+              <label class="form-label">In Date</label>
+              <input class="form-input" type="date" id="f-date">
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Model</label>
-          <input class="form-input" id="f-model" placeholder="BMW 320D">
+
+        <!-- SECTION 2: Vehicle Info -->
+        <div class="modal-section">
+          <div class="modal-section-title">🚗 Vehicle Details</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Vehicle Number (Reg No)</label>
+              <input class="form-input" id="f-reg" placeholder="TN07XX0000">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Serial Number</label>
+              <input class="form-input" id="f-serial" placeholder="VIN / Chassis No">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Vehicle Brand</label>
+              <div class="dropdown-with-add">
+                <select class="form-input" id="f-brand" onchange="updateModelDropdown()">
+                  <option value="">— Select Brand —</option>
+                </select>
+                <button class="add-dropdown-btn" onclick="toggleAddBrand()">+ Add Brand</button>
+              </div>
+              <div class="inline-add-box" id="add-brand-box">
+                <input type="text" id="new-brand-input" placeholder="e.g. Toyota, BMW, Hyundai...">
+                <div class="inline-add-box-footer">
+                  <button class="btn" onclick="toggleAddBrand()">Cancel</button>
+                  <button class="btn btn-primary" onclick="addBrand()">Add</button>
+                </div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Vehicle Model</label>
+              <div class="dropdown-with-add">
+                <select class="form-input" id="f-model">
+                  <option value="">— Select Brand first —</option>
+                </select>
+                <button class="add-dropdown-btn" onclick="toggleAddModel()">+ Add Model</button>
+              </div>
+              <div class="inline-add-box" id="add-model-box">
+                <input type="text" id="new-model-input" placeholder="e.g. Innova Crysta, 320d...">
+                <div class="inline-add-box-footer">
+                  <button class="btn" onclick="toggleAddModel()">Cancel</button>
+                  <button class="btn btn-primary" onclick="addModel()">Add</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Job Card No</label>
-          <input class="form-input" id="f-jc" placeholder="MMP-J003xxx or 1234">
+
+        <!-- SECTION 3: Customer Info -->
+        <div class="modal-section">
+          <div class="modal-section-title">👤 Customer Details</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Customer Name</label>
+              <input class="form-input" id="f-customer" placeholder="e.g. Rajesh Kumar">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Mobile</label>
+              <input class="form-input" id="f-mobile" placeholder="9XXXXXXXXX">
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">JC Date</label>
-          <input class="form-input" type="date" id="f-jc-date">
+
+        <!-- SECTION 4: Work Type & Advisor -->
+        <div class="modal-section">
+          <div class="modal-section-title">🔧 Work Type & Advisor</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Work Type</label>
+              <select class="form-input" id="f-type">
+                <option value="Bodyshop">Bodyshop</option>
+                <option value="Mechanical">Mechanical</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Service Advisor</label>
+              <div class="dropdown-with-add">
+                <select class="form-input" id="f-advisor">
+                  <option>BALA</option><option>DINESH</option><option>SHARUKH</option><option>GANESH</option><option>SHAHITH</option><option>ANANTH</option><option>ABINASH</option>
+                </select>
+                <button class="add-dropdown-btn" onclick="toggleAddAdvisor()">+ Add</button>
+              </div>
+              <div class="inline-add-box" id="add-advisor-box">
+                <input type="text" id="new-advisor-input" placeholder="Advisor name...">
+                <div class="inline-add-box-footer">
+                  <button class="btn" onclick="toggleAddAdvisor()">Cancel</button>
+                  <button class="btn btn-primary" onclick="addAdvisor()">Add</button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Invoice No</label>
-          <input class="form-input" id="f-invoice-no" placeholder="TNKC/2025-26/xxx">
+
+        <!-- SECTION 5: Insurance -->
+        <div class="modal-section">
+          <div class="modal-section-title">🛡️ Insurance Status</div>
+          <div class="form-group">
+            <label class="form-label">Insurance Claim?</label>
+            <div class="ins-toggle">
+              <button class="ins-btn" id="ins-yes-btn" onclick="setInsurance('YES')">✓ Yes</button>
+              <button class="ins-btn" id="ins-no-btn" onclick="setInsurance('NO')">✗ No</button>
+            </div>
+          </div>
+          <!-- Insurance YES fields -->
+          <div class="ins-detail-box" id="ins-yes-box">
+            <div class="form-row-3">
+              <div class="form-group">
+                <label class="form-label">Insurance Company</label>
+                <input class="form-input" id="f-ins-name" placeholder="e.g. ICICI Lombard">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Surveyor Name</label>
+                <input class="form-input" id="f-surveyor" placeholder="Surveyor name">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Surveyor Contact</label>
+                <input class="form-input" id="f-surveyor-contact" placeholder="9XXXXXXXXX">
+              </div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Claim Number</label>
+                <input class="form-input" id="f-claim-no" placeholder="Claim / Policy No">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Invoice No</label>
+                <input class="form-input" id="f-invoice-no" placeholder="TNKC/2025-26/xxx">
+              </div>
+            </div>
+          </div>
+          <!-- Insurance NO: show extra customer contact fields -->
+          <div class="ins-detail-box" id="ins-no-box">
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Invoice No</label>
+                <input class="form-input" id="f-invoice-no-cash" placeholder="TNKC/2025-26/xxx">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Alternate Contact</label>
+                <input class="form-input" id="f-alt-contact" placeholder="Alt phone or email">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Address / Notes</label>
+              <input class="form-input" id="f-address" placeholder="Customer address or payment notes">
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Type</label>
-          <select class="form-input" id="f-type">
-            <option>Mechanical</option><option>Bodyshop</option><option>Conversion</option>
-          </select>
+
+        <!-- SECTION 6: Estimates -->
+        <div class="modal-section">
+          <div class="modal-section-title">💰 Estimated Costs</div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Estimated Parts Sale (₹)</label>
+              <input class="form-input" id="f-parts" placeholder="0" type="number" min="0" oninput="updateTotal()">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Estimated Labour Sale (₹)</label>
+              <input class="form-input" id="f-labour" placeholder="0" type="number" min="0" oninput="updateTotal()">
+            </div>
+          </div>
+          <div style="padding:8px 12px;background:var(--color-background-secondary);border-radius:6px;border:0.5px solid var(--color-border-tertiary);font-size:13px;color:var(--color-text-primary);display:flex;justify-content:space-between;">
+            <span style="color:var(--color-text-secondary);">Estimated Total</span>
+            <span style="font-weight:600;" id="f-total-display">₹0</span>
+          </div>
         </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Advisor</label>
-          <select class="form-input" id="f-advisor">
-            <option>BALA</option><option>DINESH</option><option>SHARUKH</option><option>GANESH</option><option>SHAHITH</option><option>ANANTH</option><option>ABINASH</option>
-          </select>
+
+        <!-- SECTION 7: Remarks -->
+        <div class="modal-section">
+          <div class="modal-section-title" style="display:flex;align-items:center;justify-content:space-between;">
+            <span>💬 Remarks</span>
+            <button class="add-dropdown-btn" style="font-size:11px;padding:3px 8px;" onclick="toggleNewRemark()">+ New Remark</button>
+          </div>
+          <div class="remarks-history" id="remarks-history">
+            <div class="remarks-empty">No remarks yet.</div>
+          </div>
+          <div class="inline-add-box" id="new-remark-box">
+            <textarea class="form-input" id="f-new-remark" rows="2" placeholder="Enter new remark..." style="resize:vertical;"></textarea>
+            <div class="inline-add-box-footer">
+              <button class="btn" onclick="toggleNewRemark()">Cancel</button>
+              <button class="btn btn-primary" onclick="addRemark()">Add Remark</button>
+            </div>
+          </div>
+          <input type="hidden" id="f-remarks">
         </div>
-        <div class="form-group">
-          <label class="form-label">Location</label>
-          <select class="form-input" id="f-location">
-            <option value="IN">IN (Workshop)</option><option value="OUT">OUT</option><option value="YARD">YARD</option>
-          </select>
+
+        <!-- SECTION 8: Vehicle Location -->
+        <div class="modal-section">
+          <div class="modal-section-title">📍 Vehicle Status</div>
+          <div class="location-toggle">
+            <button class="loc-btn active-in" id="loc-in-btn" onclick="setLocation('IN')">🔵 Vehicle IN<br><span style="font-size:10px;font-weight:400;">In Workshop</span></button>
+            <button class="loc-btn" id="loc-out-btn" onclick="setLocation('OUT')">🔴 Vehicle OUT<br><span style="font-size:10px;font-weight:400;">Delivered / Outside</span></button>
+          </div>
+          <input type="hidden" id="f-location" value="IN">
         </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Parts Est. (₹)</label>
-          <input class="form-input" id="f-parts" placeholder="0" type="number">
-        </div>
-        <div class="form-group">
-          <label class="form-label">Labour Est. (₹)</label>
-          <input class="form-input" id="f-labour" placeholder="0" type="number">
-        </div>
-      </div>
-      <div class="form-group">
-        <label class="form-label">Remarks</label>
-        <input class="form-input" id="f-remarks" placeholder="Describe the issue...">
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Insurance</label>
-          <input class="form-input" id="f-ins" placeholder="ICICI / Own Payment">
-        </div>
-        <div class="form-group">
-          <label class="form-label">In Date</label>
-          <input class="form-input" type="date" id="f-date">
-        </div>
-      </div>
+
+      </div><!-- end modal-body -->
       <div class="modal-footer">
-        <button class="btn" onclick="closeModal()">Cancel</button>
-        <button class="btn btn-primary" id="submit-btn" onclick="submitTicket()">Create Job Card</button>
+        <div style="font-size:11px;color:var(--color-text-tertiary);">* Customer Name & Reg No are required</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-primary" id="submit-btn" onclick="submitTicket()">Create Job Card</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1263,52 +1449,244 @@ function closeDetail() {
   document.getElementById('detail-panel').classList.remove('open');
 }
  
-// ─── NEW TICKET MODAL ───────────────────────────────────────────────────────────
+// ─── VEHICLE BRANDS & MODELS DATA ─────────────────────────────────────────────
+let vehicleBrands = JSON.parse(localStorage.getItem('vehicle_brands') || 'null') || {
+  'Maruti Suzuki': ['Swift','Baleno','Dzire','Ertiga','Brezza','Alto','WagonR','Ciaz','XL6','Grand Vitara'],
+  'Hyundai': ['i20','Creta','Verna','Tucson','i10','Alcazar','Venue','Exter'],
+  'Tata': ['Nexon','Harrier','Safari','Tiago','Altroz','Punch','Tigor'],
+  'Honda': ['City','Amaze','Jazz','WR-V','Elevate'],
+  'Toyota': ['Innova Crysta','Fortuner','Camry','Glanza','Urban Cruiser','Hilux'],
+  'Mahindra': ['Scorpio','XUV700','XUV300','Thar','Bolero','BE 6'],
+  'Kia': ['Seltos','Sonet','Carens','EV6'],
+  'Volkswagen': ['Polo','Vento','Taigun','Tiguan'],
+  'Skoda': ['Rapid','Octavia','Superb','Kushaq','Slavia'],
+  'BMW': ['3 Series','5 Series','X1','X3','X5','7 Series','320d','520d'],
+  'Mercedes-Benz': ['C-Class','E-Class','GLA','GLC','GLE','A-Class'],
+  'Audi': ['A4','A6','Q3','Q5','Q7'],
+  'Ford': ['EcoSport','Endeavour','Figo','Freestyle','Aspire'],
+  'Renault': ['Kwid','Triber','Kiger','Duster'],
+  'Nissan': ['Magnite','Sunny','Kicks'],
+  'MG': ['Hector','ZS EV','Astor','Gloster'],
+};
+function saveBrands() { localStorage.setItem('vehicle_brands', JSON.stringify(vehicleBrands)); }
+
+function updateModelDropdown() {
+  const brand = document.getElementById('f-brand').value;
+  const modelSel = document.getElementById('f-model');
+  modelSel.innerHTML = '';
+  if (!brand) {
+    modelSel.innerHTML = '<option value="">— Select Brand first —</option>';
+    return;
+  }
+  modelSel.innerHTML = '<option value="">— Select Model —</option>';
+  (vehicleBrands[brand] || []).forEach(m => {
+    const o = document.createElement('option'); o.value = m; o.textContent = m; modelSel.appendChild(o);
+  });
+}
+
+function populateBrandDropdown(selectedBrand) {
+  const sel = document.getElementById('f-brand');
+  sel.innerHTML = '<option value="">— Select Brand —</option>';
+  Object.keys(vehicleBrands).sort().forEach(b => {
+    const o = document.createElement('option'); o.value = b; o.textContent = b;
+    if (b === selectedBrand) o.selected = true;
+    sel.appendChild(o);
+  });
+  if (selectedBrand) updateModelDropdown();
+}
+
+function toggleAddBrand() {
+  document.getElementById('add-brand-box').classList.toggle('open');
+  document.getElementById('new-brand-input').value = '';
+}
+function addBrand() {
+  const val = document.getElementById('new-brand-input').value.trim();
+  if (!val) { toast('Enter a brand name'); return; }
+  if (!vehicleBrands[val]) { vehicleBrands[val] = []; saveBrands(); }
+  populateBrandDropdown(val);
+  toggleAddBrand();
+  toast('✓ Brand added: ' + val);
+}
+
+function toggleAddModel() {
+  const brand = document.getElementById('f-brand').value;
+  if (!brand) { toast('Select a brand first'); return; }
+  document.getElementById('add-model-box').classList.toggle('open');
+  document.getElementById('new-model-input').value = '';
+}
+function addModel() {
+  const brand = document.getElementById('f-brand').value;
+  const val = document.getElementById('new-model-input').value.trim();
+  if (!brand) { toast('Select a brand first'); return; }
+  if (!val) { toast('Enter a model name'); return; }
+  if (!vehicleBrands[brand]) vehicleBrands[brand] = [];
+  if (!vehicleBrands[brand].includes(val)) { vehicleBrands[brand].push(val); saveBrands(); }
+  updateModelDropdown();
+  document.getElementById('f-model').value = val;
+  toggleAddModel();
+  toast('✓ Model added: ' + val);
+}
+
+function toggleAddAdvisor() {
+  document.getElementById('add-advisor-box').classList.toggle('open');
+  document.getElementById('new-advisor-input').value = '';
+}
+function addAdvisor() {
+  const val = document.getElementById('new-advisor-input').value.trim().toUpperCase();
+  if (!val) { toast('Enter advisor name'); return; }
+  const sel = document.getElementById('f-advisor');
+  const exists = Array.from(sel.options).some(o => o.value === val);
+  if (!exists) { const o = document.createElement('option'); o.value = val; o.textContent = val; sel.appendChild(o); }
+  sel.value = val;
+  toggleAddAdvisor();
+  toast('✓ Advisor added: ' + val);
+}
+
+// ─── INSURANCE TOGGLE ──────────────────────────────────────────────────────────
+let insuranceStatus = null;
+function setInsurance(val) {
+  insuranceStatus = val;
+  const yBtn = document.getElementById('ins-yes-btn');
+  const nBtn = document.getElementById('ins-no-btn');
+  const yBox = document.getElementById('ins-yes-box');
+  const nBox = document.getElementById('ins-no-box');
+  yBtn.className = 'ins-btn' + (val === 'YES' ? ' active-yes' : '');
+  nBtn.className = 'ins-btn' + (val === 'NO' ? ' active-no' : '');
+  yBox.classList.toggle('open', val === 'YES');
+  nBox.classList.toggle('open', val === 'NO');
+}
+
+// ─── LOCATION TOGGLE ──────────────────────────────────────────────────────────
+function setLocation(val) {
+  document.getElementById('f-location').value = val;
+  const inBtn = document.getElementById('loc-in-btn');
+  const outBtn = document.getElementById('loc-out-btn');
+  inBtn.className = 'loc-btn' + (val === 'IN' ? ' active-in' : '');
+  outBtn.className = 'loc-btn' + (val === 'OUT' ? ' active-out' : '');
+}
+
+// ─── TOTAL DISPLAY ────────────────────────────────────────────────────────────
+function updateTotal() {
+  const p = parseInt(document.getElementById('f-parts').value) || 0;
+  const l = parseInt(document.getElementById('f-labour').value) || 0;
+  document.getElementById('f-total-display').textContent = '₹' + (p + l).toLocaleString('en-IN');
+}
+
+// ─── REMARKS SYSTEM ───────────────────────────────────────────────────────────
+let currentRemarks = [];
+function renderRemarkHistory() {
+  const box = document.getElementById('remarks-history');
+  if (!currentRemarks.length) {
+    box.innerHTML = '<div class="remarks-empty">No remarks yet.</div>';
+    return;
+  }
+  box.innerHTML = currentRemarks.map((r, i) => `
+    <div class="remark-entry">
+      <div class="remark-meta">${r.date} ${r.by ? '· ' + r.by : ''}</div>
+      <div class="remark-text">${r.text}</div>
+    </div>`).join('');
+  box.scrollTop = box.scrollHeight;
+}
+function toggleNewRemark() {
+  document.getElementById('new-remark-box').classList.toggle('open');
+  document.getElementById('f-new-remark').value = '';
+}
+function addRemark() {
+  const txt = document.getElementById('f-new-remark').value.trim();
+  if (!txt) { toast('Enter remark text'); return; }
+  const advisor = document.getElementById('f-advisor').value || '';
+  currentRemarks.push({ date: new Date().toLocaleDateString('en-IN'), by: advisor, text: txt });
+  document.getElementById('f-remarks').value = currentRemarks.map(r => `[${r.date}${r.by?' - '+r.by:''}] ${r.text}`).join('\n');
+  renderRemarkHistory();
+  toggleNewRemark();
+}
+
+// ─── NEW TICKET MODAL ──────────────────────────────────────────────────────────
 function openNewTicket() {
   editingId = null;
-  document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
-  ['f-customer','f-mobile','f-reg','f-model','f-jc','f-jc-date','f-invoice-no','f-remarks','f-ins','f-parts','f-labour'].forEach(id => {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('f-date').value = today;
+  document.getElementById('f-jc-date').value = today;
+  ['f-customer','f-mobile','f-reg','f-serial','f-jc','f-parts','f-labour',
+   'f-ins-name','f-surveyor','f-surveyor-contact','f-claim-no',
+   'f-invoice-no','f-invoice-no-cash','f-alt-contact','f-address'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  document.querySelector('.modal-title').textContent = 'Create New Job Card';
+  document.getElementById('f-remarks').value = '';
+  currentRemarks = [];
+  renderRemarkHistory();
+  document.getElementById('new-remark-box').classList.remove('open');
+  document.getElementById('add-brand-box').classList.remove('open');
+  document.getElementById('add-model-box').classList.remove('open');
+  document.getElementById('add-advisor-box').classList.remove('open');
+  // Reset insurance
+  insuranceStatus = null;
+  document.getElementById('ins-yes-btn').className = 'ins-btn';
+  document.getElementById('ins-no-btn').className = 'ins-btn';
+  document.getElementById('ins-yes-box').classList.remove('open');
+  document.getElementById('ins-no-box').classList.remove('open');
+  // Reset location
+  setLocation('IN');
+  // Reset total
+  document.getElementById('f-total-display').textContent = '₹0';
+  // Populate brand dropdown
+  populateBrandDropdown('');
+  document.getElementById('modal-title-text').textContent = 'Create New Job Card';
   document.getElementById('submit-btn').textContent = 'Create Job Card';
   document.getElementById('new-modal').classList.add('open');
 }
- 
+
 function closeModal() {
   document.getElementById('new-modal').classList.remove('open');
 }
- 
+
 async function submitTicket() {
   const customer = document.getElementById('f-customer').value.trim();
   const reg = document.getElementById('f-reg').value.trim();
   if (!customer || !reg) { toast('Customer name and Reg No are required'); return; }
- 
+
+  const brand = document.getElementById('f-brand').value;
+  const model = document.getElementById('f-model').value;
+  const modelFull = brand && model ? brand + ' ' + model : (brand || model || '');
+
+  // Resolve insurance / invoice
+  let insValue = '';
+  let invoiceNo = '';
+  let surveyorVal = '';
+  if (insuranceStatus === 'YES') {
+    insValue = document.getElementById('f-ins-name').value.trim() || 'Insurance';
+    invoiceNo = document.getElementById('f-invoice-no').value.trim();
+    surveyorVal = document.getElementById('f-surveyor').value.trim();
+  } else if (insuranceStatus === 'NO') {
+    insValue = '';
+    invoiceNo = document.getElementById('f-invoice-no-cash').value.trim();
+  }
+
   const today = new Date().toISOString().split('T')[0];
   const newTicket = {
     id: 'VEH-' + Date.now(),
     inDate: document.getElementById('f-date').value || today,
     jc: document.getElementById('f-jc').value.trim(),
     jcDate: document.getElementById('f-jc-date').value || null,
-    invoiceNo: document.getElementById('f-invoice-no').value.trim(),
+    invoiceNo: invoiceNo,
     invoiceDate: null,
     customer: customer.toUpperCase(),
     mobile: document.getElementById('f-mobile').value.trim(),
     reg: reg.toUpperCase(),
-    model: (document.getElementById('f-model').value || '').toUpperCase(),
+    model: modelFull.toUpperCase(),
     type: document.getElementById('f-type').value,
     status: 'NA',
     advisor: document.getElementById('f-advisor').value,
     remarks: document.getElementById('f-remarks').value.trim(),
     parts: parseInt(document.getElementById('f-parts').value) || 0,
     labour: parseInt(document.getElementById('f-labour').value) || 0,
-    ins: document.getElementById('f-ins').value.trim(),
-    location: document.getElementById('f-location').value,
+    ins: insValue,
+    location: document.getElementById('f-location').value || 'IN',
     section: 'Active',
-    surveyor: '',
+    surveyor: surveyorVal,
   };
- 
+
   document.getElementById('submit-btn').disabled = true;
   document.getElementById('submit-btn').textContent = 'Saving...';
   showLoading(true);
@@ -1316,7 +1694,7 @@ async function submitTicket() {
   showLoading(false);
   document.getElementById('submit-btn').disabled = false;
   document.getElementById('submit-btn').textContent = 'Create Job Card';
- 
+
   if (saved) {
     tickets.unshift(saved);
     closeModal();
@@ -1324,7 +1702,7 @@ async function submitTicket() {
     toast('✓ Job Card created: ' + saved.id);
   }
 }
- 
+
 document.getElementById('new-modal').addEventListener('click', e => {
   if (e.target === document.getElementById('new-modal')) closeModal();
 });
