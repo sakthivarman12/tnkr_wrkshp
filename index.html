@@ -299,6 +299,143 @@
   #loading-overlay.show { display: flex; }
   .spinner { width: 24px; height: 24px; border: 2px solid #e8e7e3; border-top-color: #378ADD; border-radius: 50%; animation: spin 0.6s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── DAILY TASKS VIEW ──────────────────────────────────────────── */
+  .tasks-view {
+    padding: 16px 20px;
+    overflow-y: auto;
+    height: 100%;
+    background: var(--color-background-secondary);
+  }
+  .tasks-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .tasks-date-label {
+    font-size: 13px; font-weight: 600; color: var(--color-text-primary);
+  }
+  .tasks-date-sub {
+    font-size: 11px; color: var(--color-text-tertiary); margin-top: 2px;
+  }
+  .tasks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 14px;
+  }
+  .advisor-task-card {
+    background: var(--color-background-primary);
+    border: 0.5px solid var(--color-border-tertiary);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .advisor-task-header {
+    padding: 10px 14px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 0.5px solid var(--color-border-tertiary);
+  }
+  .advisor-avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0;
+  }
+  .advisor-task-name {
+    font-size: 13px; font-weight: 600; color: var(--color-text-primary);
+  }
+  .advisor-task-meta {
+    font-size: 11px; color: var(--color-text-tertiary); margin-top: 1px;
+  }
+  .advisor-task-badge {
+    margin-left: auto;
+    font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 10px;
+    background: var(--color-background-secondary);
+    color: var(--color-text-secondary);
+  }
+  .advisor-jobs-list {
+    padding: 10px 14px;
+    display: flex; flex-direction: column; gap: 8px;
+    flex: 1;
+    max-height: 340px;
+    overflow-y: auto;
+  }
+  .task-job-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-secondary);
+    border: 0.5px solid var(--color-border-tertiary);
+    cursor: pointer;
+    transition: border-color 0.15s;
+  }
+  .task-job-row:hover { border-color: var(--color-border-secondary); }
+  .task-job-status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    flex-shrink: 0; margin-top: 3px;
+  }
+  .task-job-main { flex: 1; min-width: 0; }
+  .task-job-reg {
+    font-size: 11px; font-weight: 600; font-family: var(--font-mono);
+    color: var(--color-text-primary);
+  }
+  .task-job-customer {
+    font-size: 11px; color: var(--color-text-secondary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .task-job-model {
+    font-size: 10px; color: var(--color-text-tertiary);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .task-job-status-label {
+    font-size: 10px; font-weight: 500;
+    padding: 1px 6px; border-radius: 8px;
+    flex-shrink: 0; white-space: nowrap;
+    align-self: flex-start; margin-top: 2px;
+  }
+  .task-add-note {
+    padding: 10px 14px;
+    border-top: 0.5px solid var(--color-border-tertiary);
+    display: flex; gap: 6px;
+  }
+  .task-note-input {
+    flex: 1; padding: 5px 9px; font-size: 12px;
+    border: 0.5px solid var(--color-border-secondary);
+    border-radius: var(--border-radius-md);
+    background: var(--color-background-secondary);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+  }
+  .task-note-input:focus { outline: none; border-color: #378ADD; }
+  .task-note-btn {
+    padding: 5px 10px; font-size: 11px;
+    border: 0.5px solid #378ADD; border-radius: var(--border-radius-md);
+    background: #378ADD; color: #fff; cursor: pointer; font-family: var(--font-sans);
+  }
+  .task-note-btn:hover { background: #185FA5; }
+  .task-saved-note {
+    padding: 6px 14px 10px;
+    font-size: 11px; color: var(--color-text-secondary);
+    font-style: italic;
+    background: var(--color-background-secondary);
+    border-top: 0.5px solid var(--color-border-tertiary);
+    line-height: 1.4;
+  }
+  .tasks-empty {
+    text-align: center; padding: 20px 10px;
+    font-size: 12px; color: var(--color-text-tertiary); font-style: italic;
+  }
+  .tasks-summary-bar {
+    display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px;
+  }
+  .tasks-summary-chip {
+    padding: 4px 12px; border-radius: 10px; font-size: 11px; font-weight: 500;
+    border: 0.5px solid var(--color-border-secondary);
+    background: var(--color-background-primary);
+    color: var(--color-text-secondary);
+    display: flex; gap: 6px; align-items: center;
+  }
+  .tasks-summary-num { font-weight: 700; color: var(--color-text-primary); }
 </style>
 </head>
 <body>
@@ -325,6 +462,10 @@
     </div>
 
     <div class="sidebar-nav">
+      <div class="nav-section">Today</div>
+      <div class="nav-item" id="nav-daily-tasks" onclick="setView('dailytasks','all')" style="font-weight:600;color:#378ADD;background:var(--color-background-primary);border-left:2px solid #378ADD">
+        <span class="nav-dot" style="background:#378ADD"></span>📋 Daily Task Assignment
+      </div>
       <div class="nav-section">Boards</div>
       <div class="nav-item" onclick="setView('board','all')"><span class="nav-dot" style="background:#378ADD"></span>All Job Cards</div>
       <div class="nav-item" onclick="setView('board','WIP')"><span class="nav-dot" style="background:#EF9F27"></span>Work In Progress</div>
@@ -962,6 +1103,9 @@ function setView(view, statusFilter) {
   if (view === 'analytics') {
     document.getElementById('nav-analytics').classList.add('active');
   }
+  if (view === 'dailytasks') {
+    document.getElementById('nav-daily-tasks').classList.add('active');
+  }
   renderContent();
 }
 
@@ -1280,6 +1424,120 @@ function renderDashboard() {
   </div>`;
 }
  
+// ─── DAILY TASK ASSIGNMENT ─────────────────────────────────────────────────────
+const ADVISOR_META = {
+  'BALA':    { color: '#534AB7', initials: 'BA' },
+  'DINESH':  { color: '#D85A30', initials: 'DI' },
+  'SHARUKH': { color: '#1D9E75', initials: 'SH' },
+  'GANESH':  { color: '#D4537E', initials: 'GA' },
+  'SHAHITH': { color: '#BA7517', initials: 'ST' },
+  'ANANTH':  { color: '#7777CC', initials: 'AN' },
+  'ABINASH': { color: '#558855', initials: 'AB' },
+};
+const ADVISOR_ORDER = ['BALA','DINESH','SHARUKH','GANESH','SHAHITH','ANANTH','ABINASH'];
+
+// Persistent notes per advisor stored in localStorage
+function getAdvisorNotes() {
+  try { return JSON.parse(localStorage.getItem('advisor_daily_notes') || '{}'); } catch { return {}; }
+}
+function saveAdvisorNote(advisor, note) {
+  const notes = getAdvisorNotes();
+  const today = new Date().toISOString().split('T')[0];
+  notes[advisor + '_' + today] = note;
+  localStorage.setItem('advisor_daily_notes', JSON.stringify(notes));
+}
+function getAdvisorNote(advisor) {
+  const notes = getAdvisorNotes();
+  const today = new Date().toISOString().split('T')[0];
+  return notes[advisor + '_' + today] || '';
+}
+
+function renderDailyTasks() {
+  // Use all active tickets (no time filter for tasks — show all current workload)
+  const allActive = tickets.filter(t => t.section !== 'Closed');
+  const today = new Date();
+  const dateStr = today.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  // Summary stats
+  const totalCars = allActive.length;
+  const wipCount  = allActive.filter(t => t.status === 'WIP').length;
+  const naCount   = allActive.filter(t => t.status === 'NA').length;
+  const rncCount  = allActive.filter(t => t.status === 'RNC').length;
+
+  const summaryBar = `
+    <div class="tasks-summary-bar">
+      <div class="tasks-summary-chip">🚗 Total Active <span class="tasks-summary-num">${totalCars}</span></div>
+      <div class="tasks-summary-chip" style="border-color:#EF9F27;color:#854F0B">🔧 WIP <span class="tasks-summary-num" style="color:#EF9F27">${wipCount}</span></div>
+      <div class="tasks-summary-chip" style="border-color:#888780;color:#5F5E5A">⏳ Not Allotted <span class="tasks-summary-num" style="color:#888780">${naCount}</span></div>
+      <div class="tasks-summary-chip" style="border-color:#639922;color:#3B6D11">✅ Ready to Collect <span class="tasks-summary-num" style="color:#639922">${rncCount}</span></div>
+    </div>`;
+
+  const advisorCards = ADVISOR_ORDER.map(adv => {
+    const meta = ADVISOR_META[adv] || { color: '#888780', initials: adv.slice(0,2) };
+    const jobs = allActive.filter(t => t.advisor === adv);
+    const savedNote = getAdvisorNote(adv);
+
+    const jobRows = jobs.length ? jobs.map(t => {
+      const sc = STATUS_CONFIG[t.status] || { label: t.status, bg: '#F1EFE8', color: '#5F5E5A', col: '#888780' };
+      return `<div class="task-job-row" onclick="openDetail('${t.id}')">
+        <div class="task-job-status-dot" style="background:${sc.col}"></div>
+        <div class="task-job-main">
+          <div class="task-job-reg">${t.reg}</div>
+          <div class="task-job-customer">${t.customer}</div>
+          <div class="task-job-model">${t.model || '—'}</div>
+        </div>
+        <span class="task-job-status-label" style="background:${sc.bg};color:${sc.color}">${sc.label}</span>
+      </div>`;
+    }).join('') : `<div class="tasks-empty">No active jobs assigned</div>`;
+
+    const wip  = jobs.filter(t => t.status === 'WIP').length;
+    const rnc  = jobs.filter(t => t.status === 'RNC').length;
+    const na   = jobs.filter(t => t.status === 'NA').length;
+
+    return `<div class="advisor-task-card">
+      <div class="advisor-task-header">
+        <div class="advisor-avatar" style="background:${meta.color}">${meta.initials}</div>
+        <div>
+          <div class="advisor-task-name">${adv.charAt(0) + adv.slice(1).toLowerCase()}</div>
+          <div class="advisor-task-meta">
+            ${wip ? `<span style="color:#EF9F27">${wip} WIP</span>&nbsp;` : ''}
+            ${na  ? `<span style="color:#888780">${na} NA</span>&nbsp;` : ''}
+            ${rnc ? `<span style="color:#639922">${rnc} RNC</span>` : ''}
+            ${!wip && !na && !rnc ? '<span style="color:var(--color-text-tertiary)">No active work</span>' : ''}
+          </div>
+        </div>
+        <div class="advisor-task-badge">${jobs.length} job${jobs.length !== 1 ? 's' : ''}</div>
+      </div>
+      <div class="advisor-jobs-list">${jobRows}</div>
+      ${savedNote ? `<div class="task-saved-note">📝 ${savedNote}</div>` : ''}
+      <div class="task-add-note">
+        <input class="task-note-input" id="note-${adv}" placeholder="Add today's note for ${adv.charAt(0)+adv.slice(1).toLowerCase()}..." value="${savedNote.replace(/"/g,'&quot;')}">
+        <button class="task-note-btn" onclick="saveDailyNote('${adv}')">Save</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  return `<div class="tasks-view">
+    <div class="tasks-header">
+      <div>
+        <div class="tasks-date-label">📋 Daily Task Assignment</div>
+        <div class="tasks-date-sub">${dateStr}</div>
+      </div>
+      <button class="btn" onclick="renderContent()" style="font-size:11px">⟳ Refresh</button>
+    </div>
+    ${summaryBar}
+    <div class="tasks-grid">${advisorCards}</div>
+  </div>`;
+}
+
+function saveDailyNote(advisor) {
+  const el = document.getElementById('note-' + advisor);
+  if (!el) return;
+  saveAdvisorNote(advisor, el.value.trim());
+  toast('✓ Note saved for ' + advisor.charAt(0) + advisor.slice(1).toLowerCase());
+  renderContent();
+}
+
 // ─── RENDER ─────────────────────────────────────────────────────────────────────
 function renderStats(data) {
   const wip = data.filter(t => t.status === 'WIP').length;
@@ -1359,6 +1617,12 @@ function renderContent() {
     document.getElementById('page-title').textContent = 'Analytics Dashboard';
     el.style.overflow = 'hidden';
     el.innerHTML = renderDashboard();
+    return;
+  }
+  if (currentView === 'dailytasks') {
+    document.getElementById('page-title').textContent = '📋 Daily Task Assignment';
+    el.style.overflow = 'hidden';
+    el.innerHTML = renderDailyTasks();
     return;
   }
   el.style.overflow = '';
