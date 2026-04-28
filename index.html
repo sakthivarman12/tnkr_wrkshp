@@ -276,16 +276,16 @@
     </div>
     <div class="sidebar-nav">
       <div class="nav-section">Boards</div>
-      <div class="nav-item active" onclick="setView('board','all')"><span class="nav-dot" style="background:#378ADD"></span>All Tickets</div>
-      <div class="nav-item" onclick="setView('board','WIP')"><span class="nav-dot" style="background:#EF9F27"></span>In Progress</div>
+      <div class="nav-item" onclick="setView('board','all')"><span class="nav-dot" style="background:#378ADD"></span>All Job Cards</div>
+      <div class="nav-item" onclick="setView('board','WIP')"><span class="nav-dot" style="background:#EF9F27"></span>Work In Progress</div>
       <div class="nav-item" onclick="setView('board','AP')"><span class="nav-dot" style="background:#378ADD"></span>Awaiting Parts</div>
-      <div class="nav-item" onclick="setView('board','NA')"><span class="nav-dot" style="background:#888780"></span>Not Approved</div>
-      <div class="nav-item" onclick="setView('board','AWCUSA')"><span class="nav-dot" style="background:#E24B4A"></span>AWCUSA</div>
+      <div class="nav-item" onclick="setView('board','NA')"><span class="nav-dot" style="background:#888780"></span>Not Allotted</div>
+      <div class="nav-item" onclick="setView('board','AWCUSA')"><span class="nav-dot" style="background:#E24B4A"></span>Awaiting Customer Approval</div>
       <div class="nav-item" onclick="setView('board','PTBO')"><span class="nav-dot" style="background:#D85A30"></span>Parts Backorder</div>
-      <div class="nav-item" onclick="setView('board','RNC')"><span class="nav-dot" style="background:#639922"></span>Ready/Collect</div>
+      <div class="nav-item" onclick="setView('board','RNC')"><span class="nav-dot" style="background:#639922"></span>Ready Not Collected</div>
       <div class="nav-section">Reports</div>
       <div class="nav-item" onclick="setView('list','all')"><span class="nav-dot" style="background:#639922"></span>List View</div>
-      <div class="nav-item" id="nav-analytics" onclick="setView('analytics','all')"><span class="nav-dot" style="background:#73bf69"></span>📊 Analytics</div>
+      <div class="nav-item active" id="nav-analytics" onclick="setView('analytics','all')"><span class="nav-dot" style="background:#73bf69"></span>📊 Analytics</div>
       <div class="nav-section">Advisors</div>
       <div class="nav-item" onclick="setAdvisor('BALA')"><span class="nav-dot" style="background:#534AB7"></span>Bala</div>
       <div class="nav-item" onclick="setAdvisor('DINESH')"><span class="nav-dot" style="background:#D85A30"></span>Dinesh</div>
@@ -315,7 +315,7 @@
       </div>
       <button class="dark-toggle" id="dark-toggle-btn" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
       <button class="btn" onclick="exportToExcel()" title="Export to Excel">📥 Export</button>
-      <button class="btn btn-primary" onclick="openNewTicket()">+ New Ticket</button>
+      <button class="btn btn-primary" onclick="openNewTicket()">+ New Job Card</button>
     </div>
  
     <div class="stats-bar" id="stats-bar"></div>
@@ -326,6 +326,10 @@
       <div class="filter-chip" onclick="setFilter('typeFilter','Mechanical',this)">Mechanical</div>
       <div class="filter-chip" onclick="setFilter('typeFilter','Bodyshop',this)">Bodyshop</div>
       <div class="filter-chip" onclick="setFilter('typeFilter','Conversion',this)">Conversion</div>
+      <span style="font-size:11px;color:var(--color-text-tertiary);font-weight:500;margin-left:10px;">Period:</span>
+      <div class="filter-chip time-chip active" id="tf-all" onclick="setTimeFilter('all',this)">All Time</div>
+      <div class="filter-chip time-chip" id="tf-month" onclick="setTimeFilter('thisMonth',this)">This Month</div>
+      <div class="filter-chip time-chip" id="tf-6m" onclick="setTimeFilter('prev6months',this)">Previous 6 Months</div>
     </div>
  
     <div class="content" id="main-content"></div>
@@ -345,7 +349,7 @@
   <!-- New Ticket Modal -->
   <div class="modal-overlay" id="new-modal">
     <div class="modal">
-      <div class="modal-title">Create New Ticket</div>
+      <div class="modal-title">Create New Job Card</div>
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Customer Name</label>
@@ -428,7 +432,7 @@
       </div>
       <div class="modal-footer">
         <button class="btn" onclick="closeModal()">Cancel</button>
-        <button class="btn btn-primary" id="submit-btn" onclick="submitTicket()">Create Ticket</button>
+        <button class="btn btn-primary" id="submit-btn" onclick="submitTicket()">Create Job Card</button>
       </div>
     </div>
   </div>
@@ -483,10 +487,10 @@ function exportToExcel() {
  
   const headers = ['ID','Job Card','JC Date','Invoice No','Date','Customer','Mobile','Reg No','Model','Type','Status','Advisor','Parts (₹)','Labour (₹)','Total (₹)','Insurance','Location','Section','Remarks'];
   const STATUS_LABELS = {
-    WIP:'In Progress', AP:'Awaiting Parts', NA:'Not Approved',
-    AWCUSA:'Awaiting Customer', AWINSA:'Awaiting Insurance',
-    AWINSD:'Awaiting Inspection', RNC:'Ready/Collect',
-    AA:'Accident Adv', PTBO:'Parts BO', APBO:'Parts BO'
+    WIP:'Work In Progress', AP:'Awaiting Parts', NA:'Not Allotted',
+    AWCUSA:'Awaiting Customer Approval', AWINSA:'Awaiting Insurance Approval',
+    AWINSD:'Awaiting Insurance Document', RNC:'Ready Not Collected',
+    AA:'Awaiting Approval', PTBO:'Parts Backorder', APBO:'Parts Backorder'
   };
  
   const rows = data.map(t => [
@@ -571,34 +575,35 @@ function initSupabase(url, key) {
  
 // ─── STATE ─────────────────────────────────────────────────────────────────────
 let tickets = [];
-let currentView = 'board';
+let currentView = 'analytics';
 let currentStatusFilter = 'all';
 let typeFilter = 'all';
 let advisorFilter = null;
 let editingId = null;
+let timeFilter = 'all'; // 'all' | 'thisMonth' | 'prev6months'
  
 // ─── STATUS CONFIG ──────────────────────────────────────────────────────────────
 const STATUS_CONFIG = {
-  'WIP':    { label: 'In Progress',    bg: '#FAEEDA', color: '#854F0B', col: '#EF9F27' },
-  'AP':     { label: 'Awaiting Parts', bg: '#E6F1FB', color: '#185FA5', col: '#378ADD' },
-  'NA':     { label: 'Not Approved',   bg: '#F1EFE8', color: '#5F5E5A', col: '#888780' },
-  'AWCUSA': { label: 'Awaiting Cust',  bg: '#FCEBEB', color: '#A32D2D', col: '#E24B4A' },
-  'AWINSA': { label: 'Awaiting Ins',   bg: '#EEEDFE', color: '#3C3489', col: '#7F77DD' },
-  'AWINSD': { label: 'Awaiting Insp',  bg: '#FBEAF0', color: '#72243E', col: '#D4537E' },
-  'RNC':    { label: 'Ready/Collect',  bg: '#EAF3DE', color: '#3B6D11', col: '#639922' },
-  'AA':     { label: 'Accident Adv',   bg: '#FAECE7', color: '#993C1D', col: '#D85A30' },
-  'PTBO':   { label: 'Parts BO',       bg: '#FCEBEB', color: '#A32D2D', col: '#E24B4A' },
-  'APBO':   { label: 'Parts BO',       bg: '#FCEBEB', color: '#A32D2D', col: '#E24B4A' },
+  'WIP':    { label: 'Work In Progress',              bg: '#FAEEDA', color: '#854F0B', col: '#EF9F27' },
+  'AP':     { label: 'Awaiting Parts',                bg: '#E6F1FB', color: '#185FA5', col: '#378ADD' },
+  'NA':     { label: 'Not Allotted',                  bg: '#F1EFE8', color: '#5F5E5A', col: '#888780' },
+  'AWCUSA': { label: 'Awaiting Customer Approval',    bg: '#FCEBEB', color: '#A32D2D', col: '#E24B4A' },
+  'AWINSA': { label: 'Awaiting Insurance Approval',   bg: '#EEEDFE', color: '#3C3489', col: '#7F77DD' },
+  'AWINSD': { label: 'Awaiting Insurance Document',   bg: '#FBEAF0', color: '#72243E', col: '#D4537E' },
+  'RNC':    { label: 'Ready Not Collected',           bg: '#EAF3DE', color: '#3B6D11', col: '#639922' },
+  'AA':     { label: 'Awaiting Approval',             bg: '#FAECE7', color: '#993C1D', col: '#D85A30' },
+  'PTBO':   { label: 'Parts Backorder',               bg: '#FCEBEB', color: '#A32D2D', col: '#E24B4A' },
+  'APBO':   { label: 'Parts Backorder',               bg: '#FCEBEB', color: '#A32D2D', col: '#E24B4A' },
 };
  
 const COLUMNS = [
-  { key: 'WIP',    label: 'In Progress' },
+  { key: 'WIP',    label: 'Work In Progress' },
   { key: 'AP',     label: 'Awaiting Parts' },
-  { key: 'AWINSA', label: 'Awaiting Insurance' },
-  { key: 'AWCUSA', label: 'Awaiting Customer' },
-  { key: 'NA',     label: 'Not Approved' },
+  { key: 'AWINSA', label: 'Awaiting Insurance Approval' },
+  { key: 'AWCUSA', label: 'Awaiting Customer Approval' },
+  { key: 'NA',     label: 'Not Allotted' },
   { key: 'PTBO',   label: 'Parts Backorder' },
-  { key: 'RNC',    label: 'Ready / Collect' },
+  { key: 'RNC',    label: 'Ready Not Collected' },
 ];
  
 // ─── DB FUNCTIONS ───────────────────────────────────────────────────────────────
@@ -716,11 +721,38 @@ function showLoading(show) {
 }
  
 // ─── FILTER / VIEW ──────────────────────────────────────────────────────────────
-function setFilter(filterName, val, el) {
-  if (filterName === 'typeFilter') typeFilter = val;
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+function setTimeFilter(val, el) {
+  timeFilter = val;
+  document.querySelectorAll('.time-chip').forEach(c => c.classList.remove('active'));
   if (el) el.classList.add('active');
   renderContent();
+}
+
+function setFilter(filterName, val, el) {
+  if (filterName === 'typeFilter') typeFilter = val;
+  // Only reset type chips, not time chips
+  document.querySelectorAll('.filter-chip:not(.time-chip)').forEach(c => c.classList.remove('active'));
+  if (el) el.classList.add('active');
+  renderContent();
+}
+
+function getTimeFilteredTickets() {
+  if (timeFilter === 'all') return tickets;
+  const now = new Date();
+  return tickets.filter(t => {
+    const d = t.inDate || t.jcDate;
+    if (!d) return timeFilter === 'all';
+    const date = new Date(d);
+    if (timeFilter === 'thisMonth') {
+      return date.getFullYear() === now.getFullYear() && date.getMonth() === now.getMonth();
+    }
+    if (timeFilter === 'prev6months') {
+      const sixMonthsAgo = new Date(now);
+      sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+      return date >= sixMonthsAgo && date <= now;
+    }
+    return true;
+  });
 }
  
 function setView(view, statusFilter) {
@@ -736,7 +768,7 @@ function setView(view, statusFilter) {
   }
   renderContent();
 }
- 
+
 function setAdvisor(adv) {
   advisorFilter = adv;
   currentView = 'list';
@@ -753,7 +785,8 @@ function toggleView(v) {
  
 function getFiltered() {
   const q = (document.getElementById('search-input') || {}).value || '';
-  return tickets.filter(t => {
+  const base = getTimeFilteredTickets();
+  return base.filter(t => {
     if (typeFilter !== 'all' && !t.type.toLowerCase().startsWith(typeFilter.toLowerCase())) return false;
     if (advisorFilter && t.advisor !== advisorFilter) return false;
     if (currentStatusFilter !== 'all' && t.status !== currentStatusFilter) return false;
@@ -767,11 +800,11 @@ function getFiltered() {
  
 // ─── ANALYTICS / GRAFANA DASHBOARD ────────────────────────────────────────────
 function renderDashboard() {
-  const data = tickets; // all tickets, not filtered
+  const data = getTimeFilteredTickets(); // time-filtered tickets for dashboard
   const total = data.length;
   if (total === 0) {
     return `<div class="analytics-view" style="display:flex;align-items:center;justify-content:center;height:60%">
-      <div style="text-align:center;color:#5c6370;font-size:13px">No ticket data available yet</div>
+      <div style="text-align:center;color:#5c6370;font-size:13px">No job card data available for this period</div>
     </div>`;
   }
  
@@ -807,14 +840,14 @@ function renderDashboard() {
  
   // Status bar chart data
   const statusBarData = [
-    { label: 'In Progress',     key: 'WIP',    color: '#ff9830' },
-    { label: 'Awaiting Parts',  key: 'AP',     color: '#5794f2' },
-    { label: 'Not Approved',    key: 'NA',     color: '#5c6370' },
-    { label: 'Awaiting Cust',   key: 'AWCUSA', color: '#f05858' },
-    { label: 'Awaiting Ins',    key: 'AWINSA', color: '#b877d9' },
-    { label: 'Awaiting Insp',   key: 'AWINSD', color: '#e0598f' },
-    { label: 'Ready/Collect',   key: 'RNC',    color: '#73bf69' },
-    { label: 'Parts BO',        key: 'PTBO',   color: '#f2cc0c' },
+    { label: 'Work In Progress',           key: 'WIP',    color: '#ff9830' },
+    { label: 'Awaiting Parts',             key: 'AP',     color: '#5794f2' },
+    { label: 'Not Allotted',               key: 'NA',     color: '#5c6370' },
+    { label: 'Awaiting Customer Approval', key: 'AWCUSA', color: '#f05858' },
+    { label: 'Awaiting Insurance Approval',key: 'AWINSA', color: '#b877d9' },
+    { label: 'Awaiting Insurance Document',key: 'AWINSD', color: '#e0598f' },
+    { label: 'Ready Not Collected',        key: 'RNC',    color: '#73bf69' },
+    { label: 'Parts Backorder',            key: 'PTBO',   color: '#f2cc0c' },
   ].map(s => ({ ...s, count: byStatus[s.key] || 0 }))
    .filter(s => s.count > 0);
   const maxStatus = Math.max(...statusBarData.map(s => s.count), 1);
@@ -884,10 +917,12 @@ function renderDashboard() {
     <div class="gf-header">
       <div>
         <div class="gf-header-title">Workshop Analytics — Tinkr Auto OMR</div>
-        <div class="gf-header-sub">Live data · ${total} tickets · Last refreshed ${new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'})}</div>
+        <div class="gf-header-sub">Live data · ${total} job cards · ${timeFilter==='thisMonth'?'This month':timeFilter==='prev6months'?'Last 6 months':'All time'} · Last refreshed ${new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'})}</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <span class="gf-time-badge">All Time</span>
+        <span class="gf-time-badge" style="${timeFilter==='all'?'background:#1a3a26;color:#73bf69;border-color:#73bf69':'background:#22272e;color:#8e8e8e;border-color:#2a2f38'}" onclick="setTimeFilter('all',document.getElementById('tf-all'))" title="All Time">All Time</span>
+        <span class="gf-time-badge" style="${timeFilter==='thisMonth'?'background:#1a3a26;color:#73bf69;border-color:#73bf69':'background:#22272e;color:#8e8e8e;border-color:#2a2f38'}" onclick="setTimeFilter('thisMonth',document.getElementById('tf-month'))" title="This Month">This Month</span>
+        <span class="gf-time-badge" style="${timeFilter==='prev6months'?'background:#1a3a26;color:#73bf69;border-color:#73bf69':'background:#22272e;color:#8e8e8e;border-color:#2a2f38'}" onclick="setTimeFilter('prev6months',document.getElementById('tf-6m'))" title="Prev 6 Months">Prev 6 Months</span>
         <button class="btn" style="font-size:11px;background:#181b1f;border-color:#2a2f38;color:#8e8e8e" onclick="renderContent()">⟳ Refresh</button>
       </div>
     </div>
@@ -895,7 +930,7 @@ function renderDashboard() {
     <!-- ROW 1: KPI CARDS -->
     <div class="gf-row gf-row-5">
       <div class="gf-panel">
-        <div class="gf-panel-title"><span class="gf-dot" style="background:#5794f2"></span>Total Tickets</div>
+        <div class="gf-panel-title"><span class="gf-dot" style="background:#5794f2"></span>Total Job Cards</div>
         <div class="gf-kpi-value">${total}</div>
         <div class="gf-kpi-sub">All repair orders</div>
       </div>
@@ -906,7 +941,7 @@ function renderDashboard() {
         <div class="gf-thresh"><div class="gf-thresh-fill" style="width:${Math.round((inWorkshop/total)*100)}%;background:#73bf69"></div></div>
       </div>
       <div class="gf-panel">
-        <div class="gf-panel-title"><span class="gf-dot" style="background:#ff9830"></span>In Progress</div>
+        <div class="gf-panel-title"><span class="gf-dot" style="background:#ff9830"></span>Work In Progress</div>
         <div class="gf-kpi-value" style="color:#ff9830">${wip}</div>
         <div class="gf-kpi-sub">Active work orders</div>
         <div class="gf-thresh"><div class="gf-thresh-fill" style="width:${Math.round((wip/total)*100)}%;background:#ff9830"></div></div>
@@ -919,7 +954,7 @@ function renderDashboard() {
       <div class="gf-panel">
         <div class="gf-panel-title"><span class="gf-dot" style="background:#73bf69"></span>Close Rate</div>
         <div class="gf-kpi-value" style="color:${closeRate >= 70 ? '#73bf69' : closeRate >= 40 ? '#ff9830' : '#f05858'}">${closeRate}%</div>
-        <div class="gf-kpi-sub">${rnc} of ${total} ready/collected</div>
+        <div class="gf-kpi-sub">${rnc} of ${total} ready not collected</div>
         <div class="gf-thresh"><div class="gf-thresh-fill" style="width:${closeRate}%;background:${closeRate>=70?'#73bf69':closeRate>=40?'#ff9830':'#f05858'}"></div></div>
       </div>
     </div>
@@ -1055,10 +1090,10 @@ function renderStats(data) {
   const ap = data.filter(t => t.status === 'AP').length;
   const totalParts = data.reduce((s, t) => s + (t.parts || 0), 0);
   document.getElementById('stats-bar').innerHTML = `
-    <div class="stat-box"><div class="stat-num">${data.length}</div><div class="stat-label">Total tickets</div></div>
-    <div class="stat-box"><div class="stat-num" style="color:#EF9F27">${wip}</div><div class="stat-label">In progress</div></div>
-    <div class="stat-box"><div class="stat-num" style="color:#378ADD">${ap}</div><div class="stat-label">Awaiting parts</div></div>
-    <div class="stat-box"><div class="stat-num" style="color:#639922">₹${(totalParts / 100000).toFixed(1)}L</div><div class="stat-label">Parts value</div></div>
+    <div class="stat-box"><div class="stat-num">${data.length}</div><div class="stat-label">Total Job Cards</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#EF9F27">${wip}</div><div class="stat-label">Work In Progress</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#378ADD">${ap}</div><div class="stat-label">Awaiting Parts</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#639922">₹${(totalParts / 100000).toFixed(1)}L</div><div class="stat-label">Parts Value</div></div>
   `;
 }
  
@@ -1092,7 +1127,7 @@ function renderBoard(data) {
             <span class="advisor-pill">${t.advisor}</span>
           </div>
           ${t.parts > 0 ? `<div style="margin-top:6px;font-size:10px;color:var(--color-text-tertiary)">Parts: ₹${t.parts.toLocaleString()}</div>` : ''}
-        </div>`).join('') : `<div style="padding:16px;text-align:center;font-size:12px;color:var(--color-text-tertiary)">No tickets</div>`}
+        </div>`).join('') : `<div style="padding:16px;text-align:center;font-size:12px;color:var(--color-text-tertiary)">No job cards</div>`}
       </div>
     </div>`;
   }).join('')}</div>`;
@@ -1133,7 +1168,7 @@ function renderContent() {
   el.style.overflow = '';
   document.getElementById('page-title').textContent = advisorFilter
     ? `Advisor: ${advisorFilter} (${data.length})`
-    : `Active Tickets — ${currentView === 'board' ? 'Board' : 'List'} (${data.length})`;
+    : `Active Job Cards — ${currentView === 'board' ? 'Board' : 'List'} (${data.length})`;
   el.innerHTML = currentView === 'board' ? renderBoard(data) : renderList(data);
 }
  
@@ -1189,7 +1224,7 @@ function openDetail(id) {
       ).join('')}
     </div>
     <hr class="detail-divider">
-    <button class="btn btn-danger" style="width:100%;margin-top:4px" onclick="confirmDelete('${t.id}')">🗑 Delete Ticket</button>
+    <button class="btn btn-danger" style="width:100%;margin-top:4px" onclick="confirmDelete('${t.id}')">🗑 Delete Job Card</button>
   `;
   document.getElementById('detail-panel').classList.add('open');
 }
@@ -1208,7 +1243,7 @@ async function changeStatus(id, status) {
 }
  
 function confirmDelete(id) {
-  if (!confirm('Delete this ticket? This cannot be undone.')) return;
+  if (!confirm('Delete this Job Card? This cannot be undone.')) return;
   deleteTicket(id);
 }
  
@@ -1220,7 +1255,7 @@ async function deleteTicket(id) {
     tickets = tickets.filter(t => t.id !== id);
     closeDetail();
     renderContent();
-    toast('✓ Ticket deleted');
+    toast('✓ Job Card deleted');
   }
 }
  
@@ -1236,8 +1271,8 @@ function openNewTicket() {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
-  document.querySelector('.modal-title').textContent = 'Create New Ticket';
-  document.getElementById('submit-btn').textContent = 'Create Ticket';
+  document.querySelector('.modal-title').textContent = 'Create New Job Card';
+  document.getElementById('submit-btn').textContent = 'Create Job Card';
   document.getElementById('new-modal').classList.add('open');
 }
  
@@ -1280,13 +1315,13 @@ async function submitTicket() {
   const saved = await insertTicket(newTicket);
   showLoading(false);
   document.getElementById('submit-btn').disabled = false;
-  document.getElementById('submit-btn').textContent = 'Create Ticket';
+  document.getElementById('submit-btn').textContent = 'Create Job Card';
  
   if (saved) {
     tickets.unshift(saved);
     closeModal();
     renderContent();
-    toast('✓ Ticket created: ' + saved.id);
+    toast('✓ Job Card created: ' + saved.id);
   }
 }
  
