@@ -114,11 +114,26 @@
   .detail-label { font-size: 11px; color: var(--color-text-tertiary); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
   .detail-value { font-size: 13px; color: var(--color-text-primary); }
   .detail-divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 16px 0; }
-  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); flex-shrink: 0; }
+  .stats-bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); flex-shrink: 0; }
   .stat-box { padding: 10px 16px; border-right: 0.5px solid var(--color-border-tertiary); }
   .stat-box:last-child { border-right: none; }
   .stat-num { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
   .stat-label { font-size: 11px; color: var(--color-text-secondary); }
+  .stat-delta { font-size: 10px; margin-top: 2px; font-weight: 500; }
+  /* Dashboard view */
+  .dashboard-view { padding: 16px 20px; overflow-y: auto; height: 100%; display: flex; flex-direction: column; gap: 16px; }
+  .dash-section-title { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+  .dash-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .dash-table th { text-align: left; padding: 7px 12px; font-size: 11px; font-weight: 500; color: var(--color-text-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); white-space: nowrap; }
+  .dash-table td { padding: 7px 12px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); vertical-align: middle; }
+  .dash-table tr:hover td { background: var(--color-background-secondary); }
+  .dash-table td.num { text-align: right; font-family: var(--font-mono); font-size: 11px; }
+  .dash-table .total-row td { font-weight: 600; background: var(--color-background-secondary); border-top: 0.5px solid var(--color-border-secondary); }
+  .advisor-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
+  .advisor-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px; }
+  .advisor-card-name { font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--color-text-primary); }
+  .advisor-card-stat { font-size: 11px; color: var(--color-text-secondary); display: flex; justify-content: space-between; padding: 2px 0; }
+  .advisor-card-stat span:last-child { font-weight: 500; color: var(--color-text-primary); }
   .view-toggle { display: flex; gap: 0; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); overflow: hidden; }
   .view-btn { padding: 5px 10px; font-size: 12px; border: none; cursor: pointer; background: var(--color-background-primary); color: var(--color-text-secondary); font-family: var(--font-sans); transition: background 0.1s; }
   .view-btn.active { background: var(--color-background-secondary); color: var(--color-text-primary); font-weight: 500; }
@@ -196,6 +211,7 @@
       <div class="view-toggle">
         <button class="view-btn active" id="vb" onclick="toggleView('board')">Board</button>
         <button class="view-btn" id="vl" onclick="toggleView('list')">List</button>
+        <button class="view-btn" id="vd" onclick="toggleView('dashboard')">Dashboard</button>
       </div>
       <button class="dark-toggle" id="dark-toggle-btn" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
       <button class="btn" onclick="exportToExcel()" title="Export to Excel">📥 Export</button>
@@ -611,8 +627,9 @@ function setView(view, statusFilter) {
   currentView = view;
   currentStatusFilter = statusFilter;
   advisorFilter = null;
-  document.getElementById('vb').classList.toggle('active', view !== 'list');
+  document.getElementById('vb').classList.toggle('active', view === 'board');
   document.getElementById('vl').classList.toggle('active', view === 'list');
+  document.getElementById('vd').classList.toggle('active', view === 'dashboard');
   renderContent();
 }
  
@@ -627,6 +644,7 @@ function toggleView(v) {
   currentView = v;
   document.getElementById('vb').classList.toggle('active', v === 'board');
   document.getElementById('vl').classList.toggle('active', v === 'list');
+  document.getElementById('vd').classList.toggle('active', v === 'dashboard');
   renderContent();
 }
  
@@ -648,12 +666,18 @@ function getFiltered() {
 function renderStats(data) {
   const wip = data.filter(t => t.status === 'WIP').length;
   const ap = data.filter(t => t.status === 'AP').length;
+  const rnc = data.filter(t => t.status === 'RNC').length;
   const totalParts = data.reduce((s, t) => s + (t.parts || 0), 0);
+  const totalLabour = data.reduce((s, t) => s + (t.labour || 0), 0);
+  const totalVal = totalParts + totalLabour;
+  const aro = data.length > 0 ? Math.round(totalVal / data.length) : 0;
   document.getElementById('stats-bar').innerHTML = `
-    <div class="stat-box"><div class="stat-num">${data.length}</div><div class="stat-label">Total tickets</div></div>
-    <div class="stat-box"><div class="stat-num" style="color:#EF9F27">${wip}</div><div class="stat-label">In progress</div></div>
-    <div class="stat-box"><div class="stat-num" style="color:#378ADD">${ap}</div><div class="stat-label">Awaiting parts</div></div>
-    <div class="stat-box"><div class="stat-num" style="color:#639922">₹${(totalParts / 100000).toFixed(1)}L</div><div class="stat-label">Parts value</div></div>
+    <div class="stat-box"><div class="stat-num">${data.length}</div><div class="stat-label">Total Tickets</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#EF9F27">${wip}</div><div class="stat-label">In Progress</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#378ADD">${ap}</div><div class="stat-label">Awaiting Parts</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#639922">${rnc}</div><div class="stat-label">Ready / Collect</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#534AB7;font-size:16px">₹${totalVal >= 100000 ? (totalVal/100000).toFixed(1)+'L' : totalVal.toLocaleString()}</div><div class="stat-label">Total Value</div></div>
+    <div class="stat-box"><div class="stat-num" style="font-size:16px">₹${aro.toLocaleString()}</div><div class="stat-label">Avg Ticket (ARO)</div></div>
   `;
 }
  
@@ -686,7 +710,8 @@ function renderBoard(data) {
             ${typeBadge(t.type)}
             <span class="advisor-pill">${t.advisor}</span>
           </div>
-          ${t.parts > 0 ? `<div style="margin-top:6px;font-size:10px;color:var(--color-text-tertiary)">Parts: ₹${t.parts.toLocaleString()}</div>` : ''}
+          ${(t.parts > 0 || t.labour > 0) ? `<div style="margin-top:6px;font-size:10px;color:var(--color-text-secondary);display:flex;justify-content:space-between"><span>Parts: ₹${(t.parts||0).toLocaleString()}</span><span style="font-weight:600;color:var(--color-text-primary)">₹${((t.parts||0)+(t.labour||0)).toLocaleString()}</span></div>` : ''}
+          ${t.inDate ? `<div style="margin-top:3px;font-size:10px;color:var(--color-text-tertiary)">${t.location ? '<span style="padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600;background:'+(t.location==='IN'?'#EAF3DE':t.location==='OUT'?'#FCEBEB':'#FAEEDA')+';color:'+(t.location==='IN'?'#3B6D11':t.location==='OUT'?'#A32D2D':'#854F0B')+'">'+t.location+'</span> ' : ''}In: ${t.inDate}</div>` : ''}
         </div>`).join('') : `<div style="padding:16px;text-align:center;font-size:12px;color:var(--color-text-tertiary)">No tickets</div>`}
       </div>
     </div>`;
@@ -696,9 +721,13 @@ function renderBoard(data) {
 function renderList(data) {
   return `<div class="list-view"><table class="list-table">
     <thead><tr>
-      <th>ID</th><th>Job Card</th><th>Date</th><th>Customer</th><th>Reg No</th><th>Model</th><th>Type</th><th>Status</th><th>Advisor</th><th>Parts (₹)</th><th>Insurance</th>
+      <th>ID</th><th>Job Card</th><th>In Date</th><th>Customer</th><th>Reg No</th><th>Model</th><th>Type</th><th>Status</th><th>Advisor</th><th style="text-align:right">Parts (₹)</th><th style="text-align:right">Labour (₹)</th><th style="text-align:right">Total (₹)</th><th>Location</th><th>Insurance</th>
     </tr></thead>
-    <tbody>${data.map(t => `<tr onclick="openDetail('${t.id}')" style="cursor:pointer">
+    <tbody>${data.map(t => {
+      const total = (t.parts || 0) + (t.labour || 0);
+      const locColor = t.location==='IN' ? '#3B6D11' : t.location==='OUT' ? '#A32D2D' : '#854F0B';
+      const locBg = t.location==='IN' ? '#EAF3DE' : t.location==='OUT' ? '#FCEBEB' : '#FAEEDA';
+      return `<tr onclick="openDetail('${t.id}')" style="cursor:pointer">
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)">${t.id}</td>
       <td style="font-family:var(--font-mono);font-size:11px;color:#378ADD;font-weight:500">${t.jc || '—'}</td>
       <td style="font-size:11px;white-space:nowrap">${t.inDate || '-'}</td>
@@ -708,21 +737,117 @@ function renderList(data) {
       <td>${typeBadge(t.type)}</td>
       <td>${statusBadge(t.status)}</td>
       <td>${t.advisor}</td>
-      <td style="text-align:right">${t.parts > 0 ? t.parts.toLocaleString() : '-'}</td>
+      <td style="text-align:right;font-family:var(--font-mono);font-size:11px">${t.parts > 0 ? t.parts.toLocaleString() : '-'}</td>
+      <td style="text-align:right;font-family:var(--font-mono);font-size:11px">${t.labour > 0 ? t.labour.toLocaleString() : '-'}</td>
+      <td style="text-align:right;font-family:var(--font-mono);font-size:11px;font-weight:500">${total > 0 ? total.toLocaleString() : '-'}</td>
+      <td><span style="padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;background:${locBg};color:${locColor}">${t.location || 'IN'}</span></td>
       <td style="font-size:11px;color:var(--color-text-secondary)">${t.ins || '-'}</td>
-    </tr>`).join('')}
+    </tr>`;}).join('')}
     </tbody>
   </table></div>`;
 }
  
+function renderDashboard(data) {
+  // Status breakdown table (like Image 4/7)
+  const statuses = Object.entries(STATUS_CONFIG);
+  const statusRows = statuses.map(([key, cfg]) => {
+    const group = data.filter(t => t.status === key);
+    if (!group.length) return '';
+    const parts = group.reduce((s,t) => s+(t.parts||0), 0);
+    const labour = group.reduce((s,t) => s+(t.labour||0), 0);
+    const total = parts + labour;
+    const aro = group.length > 0 ? Math.round(total/group.length) : 0;
+    return `<tr onclick="setView('list','${key}')" style="cursor:pointer">
+      <td>${statusBadge(key)}</td>
+      <td class="num" style="font-weight:600">${group.length}</td>
+      <td class="num">${parts > 0 ? '₹'+parts.toLocaleString() : '—'}</td>
+      <td class="num">${labour > 0 ? '₹'+labour.toLocaleString() : '—'}</td>
+      <td class="num" style="font-weight:600">${total > 0 ? '₹'+total.toLocaleString() : '—'}</td>
+      <td class="num">${aro > 0 ? '₹'+aro.toLocaleString() : '—'}</td>
+    </tr>`;
+  }).filter(Boolean).join('');
+
+  const totalParts = data.reduce((s,t)=>s+(t.parts||0),0);
+  const totalLabour = data.reduce((s,t)=>s+(t.labour||0),0);
+  const grandTotal = totalParts + totalLabour;
+  const grandAro = data.length > 0 ? Math.round(grandTotal/data.length) : 0;
+
+  // Advisor breakdown
+  const advisors = [...new Set(data.map(t=>t.advisor))].filter(Boolean).sort();
+  const advisorCards = advisors.map(adv => {
+    const group = data.filter(t=>t.advisor===adv);
+    const val = group.reduce((s,t)=>s+(t.parts||0)+(t.labour||0),0);
+    const wip = group.filter(t=>t.status==='WIP').length;
+    const rnc = group.filter(t=>t.status==='RNC').length;
+    return `<div class="advisor-card" onclick="setAdvisor('${adv}')" style="cursor:pointer">
+      <div class="advisor-card-name">${adv}</div>
+      <div class="advisor-card-stat"><span>Tickets</span><span>${group.length}</span></div>
+      <div class="advisor-card-stat"><span>In Progress</span><span style="color:#EF9F27">${wip}</span></div>
+      <div class="advisor-card-stat"><span>Ready/Collect</span><span style="color:#639922">${rnc}</span></div>
+      <div class="advisor-card-stat"><span>Total Value</span><span style="color:#534AB7">₹${val >= 100000 ? (val/100000).toFixed(1)+'L' : val.toLocaleString()}</span></div>
+    </div>`;
+  }).join('');
+
+  // Type breakdown
+  const types = ['Mechanical','Bodyshop','Conversion'];
+  const typeRows = types.map(tp => {
+    const group = data.filter(t=>t.type===tp);
+    if(!group.length) return '';
+    const val = group.reduce((s,t)=>s+(t.parts||0)+(t.labour||0),0);
+    return `<tr>
+      <td>${typeBadge(tp)}</td>
+      <td class="num" style="font-weight:600">${group.length}</td>
+      <td class="num">${val > 0 ? '₹'+val.toLocaleString() : '—'}</td>
+      <td class="num">${group.length > 0 ? Math.round((group.length/data.length)*100)+'%' : '—'}</td>
+    </tr>`;
+  }).join('');
+
+  return `<div class="dashboard-view">
+    <div>
+      <div class="dash-section-title">📊 Status Breakdown</div>
+      <table class="dash-table">
+        <thead><tr>
+          <th>Status</th><th style="text-align:right">Count</th><th style="text-align:right">Parts (₹)</th><th style="text-align:right">Labour (₹)</th><th style="text-align:right">Total (₹)</th><th style="text-align:right">ARO (₹)</th>
+        </tr></thead>
+        <tbody>${statusRows}</tbody>
+        <tfoot><tr class="total-row">
+          <td>Total</td>
+          <td class="num">${data.length}</td>
+          <td class="num">₹${totalParts.toLocaleString()}</td>
+          <td class="num">₹${totalLabour.toLocaleString()}</td>
+          <td class="num">₹${grandTotal.toLocaleString()}</td>
+          <td class="num">₹${grandAro.toLocaleString()}</td>
+        </tr></tfoot>
+      </table>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 260px;gap:16px;align-items:start">
+      <div>
+        <div class="dash-section-title">👤 Advisor Performance</div>
+        <div class="advisor-cards">${advisorCards || '<div style="font-size:12px;color:var(--color-text-tertiary)">No advisor data</div>'}</div>
+      </div>
+      <div>
+        <div class="dash-section-title">🔧 By Type</div>
+        <table class="dash-table">
+          <thead><tr>
+            <th>Type</th><th style="text-align:right">Count</th><th style="text-align:right">Value (₹)</th><th style="text-align:right">Share</th>
+          </tr></thead>
+          <tbody>${typeRows || '<tr><td colspan="4" style="text-align:center;color:var(--color-text-tertiary);padding:16px">No data</td></tr>'}</tbody>
+        </table>
+      </div>
+    </div>
+  </div>`;
+}
+
 function renderContent() {
   const data = getFiltered();
   renderStats(data);
   const el = document.getElementById('main-content');
   document.getElementById('page-title').textContent = advisorFilter
     ? `Advisor: ${advisorFilter} (${data.length})`
-    : `Active Tickets — ${currentView === 'board' ? 'Board' : 'List'} (${data.length})`;
-  el.innerHTML = currentView === 'board' ? renderBoard(data) : renderList(data);
+    : `Active Tickets — ${currentView === 'board' ? 'Board' : currentView === 'dashboard' ? 'Dashboard' : 'List'} (${data.length})`;
+  if (currentView === 'board') el.innerHTML = renderBoard(data);
+  else if (currentView === 'dashboard') el.innerHTML = renderDashboard(data);
+  else el.innerHTML = renderList(data);
 }
  
 // ─── DETAIL PANEL ───────────────────────────────────────────────────────────────
