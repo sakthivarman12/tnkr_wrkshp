@@ -114,26 +114,11 @@
   .detail-label { font-size: 11px; color: var(--color-text-tertiary); font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 3px; }
   .detail-value { font-size: 13px; color: var(--color-text-primary); }
   .detail-divider { border: none; border-top: 0.5px solid var(--color-border-tertiary); margin: 16px 0; }
-  .stats-bar { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); flex-shrink: 0; }
+  .stats-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); flex-shrink: 0; }
   .stat-box { padding: 10px 16px; border-right: 0.5px solid var(--color-border-tertiary); }
   .stat-box:last-child { border-right: none; }
   .stat-num { font-size: 20px; font-weight: 500; color: var(--color-text-primary); }
   .stat-label { font-size: 11px; color: var(--color-text-secondary); }
-  .stat-delta { font-size: 10px; margin-top: 2px; font-weight: 500; }
-  /* Dashboard view */
-  .dashboard-view { padding: 16px 20px; overflow-y: auto; height: 100%; display: flex; flex-direction: column; gap: 16px; }
-  .dash-section-title { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-  .dash-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  .dash-table th { text-align: left; padding: 7px 12px; font-size: 11px; font-weight: 500; color: var(--color-text-secondary); border-bottom: 0.5px solid var(--color-border-tertiary); background: var(--color-background-primary); white-space: nowrap; }
-  .dash-table td { padding: 7px 12px; border-bottom: 0.5px solid var(--color-border-tertiary); color: var(--color-text-primary); vertical-align: middle; }
-  .dash-table tr:hover td { background: var(--color-background-secondary); }
-  .dash-table td.num { text-align: right; font-family: var(--font-mono); font-size: 11px; }
-  .dash-table .total-row td { font-weight: 600; background: var(--color-background-secondary); border-top: 0.5px solid var(--color-border-secondary); }
-  .advisor-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; }
-  .advisor-card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-md); padding: 12px; }
-  .advisor-card-name { font-size: 12px; font-weight: 600; margin-bottom: 6px; color: var(--color-text-primary); }
-  .advisor-card-stat { font-size: 11px; color: var(--color-text-secondary); display: flex; justify-content: space-between; padding: 2px 0; }
-  .advisor-card-stat span:last-child { font-weight: 500; color: var(--color-text-primary); }
   .view-toggle { display: flex; gap: 0; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); overflow: hidden; }
   .view-btn { padding: 5px 10px; font-size: 12px; border: none; cursor: pointer; background: var(--color-background-primary); color: var(--color-text-secondary); font-family: var(--font-sans); transition: background 0.1s; }
   .view-btn.active { background: var(--color-background-secondary); color: var(--color-text-primary); font-weight: 500; }
@@ -146,6 +131,121 @@
   .form-input { width: 100%; padding: 7px 10px; font-size: 13px; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); background: var(--color-background-primary); color: var(--color-text-primary); font-family: var(--font-sans); }
   .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
   .modal-footer { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; border-top: 0.5px solid var(--color-border-tertiary); padding-top: 16px; }
+  /* ── GRAFANA ANALYTICS DASHBOARD ─────────────────────────────────── */
+  .analytics-view {
+    height: 100%;
+    overflow-y: auto;
+    padding: 16px 20px;
+    background: #0f1117;
+    font-family: 'DM Mono', 'Fira Code', monospace;
+  }
+  .gf-row { display: grid; gap: 12px; margin-bottom: 12px; }
+  .gf-row-5 { grid-template-columns: repeat(5, 1fr); }
+  .gf-row-2 { grid-template-columns: 2fr 1fr; }
+  .gf-row-3 { grid-template-columns: 1fr 1fr 1fr; }
+  .gf-row-2b { grid-template-columns: 1fr 1fr; }
+  .gf-panel {
+    background: #181b1f;
+    border: 1px solid #2a2f38;
+    border-radius: 4px;
+    padding: 14px 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .gf-panel-title {
+    font-size: 11px;
+    font-weight: 500;
+    color: #8e8e8e;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .gf-panel-title .gf-dot {
+    width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0;
+  }
+  .gf-kpi-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: #d8d9da;
+    line-height: 1;
+    margin-bottom: 4px;
+    font-family: 'DM Mono', monospace;
+  }
+  .gf-kpi-sub {
+    font-size: 11px;
+    color: #5c6370;
+  }
+  .gf-kpi-delta {
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    display: inline-block;
+    margin-top: 4px;
+  }
+  .gf-delta-up { background: #1a3a26; color: #73bf69; }
+  .gf-delta-neutral { background: #2a2f38; color: #8e8e8e; }
+  .gf-delta-warn { background: #3a2a10; color: #ff9830; }
+  /* Bar chart rows */
+  .gf-bar-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 7px; font-size: 11px;
+  }
+  .gf-bar-label { color: #8e8e8e; width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-shrink: 0; }
+  .gf-bar-track { flex: 1; height: 14px; background: #22272e; border-radius: 2px; overflow: hidden; }
+  .gf-bar-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+  .gf-bar-val { color: #d8d9da; width: 60px; text-align: right; flex-shrink: 0; font-size: 11px; }
+  /* Donut */
+  .gf-donut-wrap { display: flex; align-items: center; gap: 16px; }
+  .gf-donut-legend { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+  .gf-legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #8e8e8e; }
+  .gf-legend-dot { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  .gf-legend-val { margin-left: auto; color: #d8d9da; font-weight: 600; }
+  /* Table */
+  .gf-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .gf-table th { color: #5c6370; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 8px; text-align: left; border-bottom: 1px solid #2a2f38; }
+  .gf-table td { padding: 6px 8px; border-bottom: 1px solid #1e2229; color: #d8d9da; }
+  .gf-table tr:last-child td { border-bottom: none; }
+  .gf-table tr:hover td { background: #1e2229; }
+  /* Threshold bar */
+  .gf-thresh { width: 100%; height: 6px; background: #22272e; border-radius: 3px; margin-top: 4px; overflow: hidden; }
+  .gf-thresh-fill { height: 100%; border-radius: 3px; }
+  /* Gauge arc SVG */
+  .gf-gauge svg { display: block; margin: 0 auto; }
+  .gf-gauge-val { text-align: center; font-size: 28px; font-weight: 700; color: #d8d9da; margin-top: -10px; }
+  .gf-gauge-label { text-align: center; font-size: 10px; color: #5c6370; margin-top: 2px; }
+  /* Sparkline area */
+  .gf-spark svg { width: 100%; }
+  /* Status mini-badge */
+  .gf-status-pill {
+    display: inline-block; padding: 1px 6px; border-radius: 2px;
+    font-size: 10px; font-weight: 600;
+  }
+  /* Timeline */
+  .gf-timeline-bar {
+    display: flex; gap: 2px; align-items: flex-end; height: 52px; margin-top: 8px;
+  }
+  .gf-tl-col { flex: 1; display: flex; flex-direction: column; gap: 1px; align-items: center; justify-content: flex-end; }
+  .gf-tl-seg { width: 100%; border-radius: 1px 1px 0 0; transition: opacity 0.2s; min-height: 2px; }
+  .gf-tl-seg:hover { opacity: 0.8; }
+  .gf-tl-label { font-size: 9px; color: #5c6370; text-align: center; margin-top: 3px; white-space: nowrap; overflow: hidden; }
+  /* Dashboard header */
+  .gf-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #2a2f38;
+  }
+  .gf-header-title {
+    font-size: 14px; font-weight: 600; color: #d8d9da; letter-spacing: 0.02em;
+  }
+  .gf-header-sub { font-size: 11px; color: #5c6370; margin-top: 2px; }
+  .gf-time-badge {
+    font-size: 10px; padding: 3px 10px; border: 1px solid #2a2f38; border-radius: 3px;
+    color: #73bf69; background: #1a3a26; cursor: pointer;
+  }
   /* Config banner */
   #config-banner { position: fixed; inset: 0; background: #1c1b1a; color: #fff; z-index: 999; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 20px; padding: 32px; }
   #config-banner h2 { font-size: 18px; }
@@ -185,6 +285,7 @@
       <div class="nav-item" onclick="setView('board','RNC')"><span class="nav-dot" style="background:#639922"></span>Ready/Collect</div>
       <div class="nav-section">Reports</div>
       <div class="nav-item" onclick="setView('list','all')"><span class="nav-dot" style="background:#639922"></span>List View</div>
+      <div class="nav-item" id="nav-analytics" onclick="setView('analytics','all')"><span class="nav-dot" style="background:#73bf69"></span>📊 Analytics</div>
       <div class="nav-section">Advisors</div>
       <div class="nav-item" onclick="setAdvisor('BALA')"><span class="nav-dot" style="background:#534AB7"></span>Bala</div>
       <div class="nav-item" onclick="setAdvisor('DINESH')"><span class="nav-dot" style="background:#D85A30"></span>Dinesh</div>
@@ -211,7 +312,6 @@
       <div class="view-toggle">
         <button class="view-btn active" id="vb" onclick="toggleView('board')">Board</button>
         <button class="view-btn" id="vl" onclick="toggleView('list')">List</button>
-        <button class="view-btn" id="vd" onclick="toggleView('dashboard')">Dashboard</button>
       </div>
       <button class="dark-toggle" id="dark-toggle-btn" onclick="toggleDark()" title="Toggle dark mode">🌙</button>
       <button class="btn" onclick="exportToExcel()" title="Export to Excel">📥 Export</button>
@@ -629,7 +729,11 @@ function setView(view, statusFilter) {
   advisorFilter = null;
   document.getElementById('vb').classList.toggle('active', view === 'board');
   document.getElementById('vl').classList.toggle('active', view === 'list');
-  document.getElementById('vd').classList.toggle('active', view === 'dashboard');
+  // Highlight analytics nav
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (view === 'analytics') {
+    document.getElementById('nav-analytics').classList.add('active');
+  }
   renderContent();
 }
  
@@ -644,7 +748,6 @@ function toggleView(v) {
   currentView = v;
   document.getElementById('vb').classList.toggle('active', v === 'board');
   document.getElementById('vl').classList.toggle('active', v === 'list');
-  document.getElementById('vd').classList.toggle('active', v === 'dashboard');
   renderContent();
 }
  
@@ -662,22 +765,300 @@ function getFiltered() {
   });
 }
  
+// ─── ANALYTICS / GRAFANA DASHBOARD ────────────────────────────────────────────
+function renderDashboard() {
+  const data = tickets; // all tickets, not filtered
+  const total = data.length;
+  if (total === 0) {
+    return `<div class="analytics-view" style="display:flex;align-items:center;justify-content:center;height:60%">
+      <div style="text-align:center;color:#5c6370;font-size:13px">No ticket data available yet</div>
+    </div>`;
+  }
+ 
+  // ── Computed stats ──────────────────────────────────────────────────────────
+  const byStatus = {};
+  const STATUSES = ['WIP','AP','NA','AWCUSA','AWINSA','AWINSD','RNC','AA','PTBO','APBO'];
+  STATUSES.forEach(s => { byStatus[s] = data.filter(t => t.status === s).length; });
+ 
+  const totalParts  = data.reduce((s, t) => s + (t.parts  || 0), 0);
+  const totalLabour = data.reduce((s, t) => s + (t.labour || 0), 0);
+  const totalValue  = totalParts + totalLabour;
+  const avgRO       = total > 0 ? Math.round(totalValue / total) : 0;
+  const rnc         = byStatus['RNC'] || 0;
+  const closeRate   = total > 0 ? Math.round((rnc / total) * 100) : 0;
+  const inWorkshop  = data.filter(t => t.location === 'IN').length;
+  const wip         = byStatus['WIP'] || 0;
+ 
+  // Advisor breakdown
+  const ADVISORS = ['BALA','DINESH','SHARUKH','GANESH','SHAHITH','ANANTH','ABINASH'];
+  const advisorData = ADVISORS.map(a => {
+    const tks = data.filter(t => t.advisor === a);
+    const val = tks.reduce((s, t) => s + (t.parts || 0) + (t.labour || 0), 0);
+    return { name: a, count: tks.length, value: val };
+  }).filter(a => a.count > 0).sort((a, b) => b.count - a.count);
+  const maxAdv = Math.max(...advisorData.map(a => a.count), 1);
+ 
+  // Type breakdown
+  const typeData = [
+    { label: 'Mechanical', count: data.filter(t => t.type === 'Mechanical').length, color: '#5794f2' },
+    { label: 'Bodyshop',   count: data.filter(t => t.type === 'Bodyshop').length,   color: '#ff9830' },
+    { label: 'Conversion', count: data.filter(t => t.type === 'Conversion').length, color: '#73bf69' },
+  ];
+ 
+  // Status bar chart data
+  const statusBarData = [
+    { label: 'In Progress',     key: 'WIP',    color: '#ff9830' },
+    { label: 'Awaiting Parts',  key: 'AP',     color: '#5794f2' },
+    { label: 'Not Approved',    key: 'NA',     color: '#5c6370' },
+    { label: 'Awaiting Cust',   key: 'AWCUSA', color: '#f05858' },
+    { label: 'Awaiting Ins',    key: 'AWINSA', color: '#b877d9' },
+    { label: 'Awaiting Insp',   key: 'AWINSD', color: '#e0598f' },
+    { label: 'Ready/Collect',   key: 'RNC',    color: '#73bf69' },
+    { label: 'Parts BO',        key: 'PTBO',   color: '#f2cc0c' },
+  ].map(s => ({ ...s, count: byStatus[s.key] || 0 }))
+   .filter(s => s.count > 0);
+  const maxStatus = Math.max(...statusBarData.map(s => s.count), 1);
+ 
+  // Location split
+  const locIN   = data.filter(t => t.location === 'IN').length;
+  const locOUT  = data.filter(t => t.location === 'OUT').length;
+  const locYARD = data.filter(t => t.location === 'YARD').length;
+ 
+  // Donut SVG helper
+  function donutSVG(segments, cx, cy, r, strokeW) {
+    let cumAngle = -90;
+    const paths = segments.filter(s => s.value > 0).map(s => {
+      const startAngle = cumAngle;
+      const sweep = (s.value / total) * 360;
+      cumAngle += sweep;
+      const endAngle = cumAngle;
+      const x1 = cx + r * Math.cos(startAngle * Math.PI / 180);
+      const y1 = cy + r * Math.sin(startAngle * Math.PI / 180);
+      const x2 = cx + r * Math.cos(endAngle   * Math.PI / 180);
+      const y2 = cy + r * Math.sin(endAngle   * Math.PI / 180);
+      const large = sweep > 180 ? 1 : 0;
+      return `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z" fill="${s.color}" opacity="0.9"/>`;
+    });
+    const innerR = r - strokeW;
+    return `<svg viewBox="0 0 ${cx*2} ${cy*2}" width="${cx*2}" height="${cy*2}">
+      ${paths.join('')}
+      <circle cx="${cx}" cy="${cy}" r="${innerR}" fill="#181b1f"/>
+    </svg>`;
+  }
+ 
+  const typeDonut = donutSVG(typeData.map(t => ({ value: t.count, color: t.color })), 55, 55, 50, 28);
+  const locDonut  = donutSVG([
+    { value: locIN,   color: '#73bf69' },
+    { value: locOUT,  color: '#f05858' },
+    { value: locYARD, color: '#ff9830' },
+  ], 55, 55, 50, 28);
+ 
+  // Gauge arc SVG
+  function gaugeSVG(pct, color) {
+    const r = 60, cx = 80, cy = 75;
+    const startAngle = 200, endAngle = 340;
+    const arcLen = endAngle - startAngle;
+    const filled = arcLen * (pct / 100);
+    const toRad = a => a * Math.PI / 180;
+    const bgX1 = cx + r * Math.cos(toRad(startAngle)); const bgY1 = cy + r * Math.sin(toRad(startAngle));
+    const bgX2 = cx + r * Math.cos(toRad(startAngle + arcLen)); const bgY2 = cy + r * Math.sin(toRad(startAngle + arcLen));
+    const fgX2 = cx + r * Math.cos(toRad(startAngle + filled)); const fgY2 = cy + r * Math.sin(toRad(startAngle + filled));
+    const bgLarge = arcLen > 180 ? 1 : 0;
+    const fgLarge = filled > 180 ? 1 : 0;
+    return `<svg width="160" height="100" viewBox="0 0 160 100">
+      <path d="M${bgX1},${bgY1} A${r},${r} 0 ${bgLarge} 1 ${bgX2},${bgY2}" fill="none" stroke="#22272e" stroke-width="10" stroke-linecap="round"/>
+      ${pct > 0 ? `<path d="M${bgX1},${bgY1} A${r},${r} 0 ${fgLarge} 1 ${fgX2},${fgY2}" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round"/>` : ''}
+    </svg>`;
+  }
+ 
+  // Recent tickets timeline (last 10 by inDate or id)
+  const recent = [...data].filter(t => t.inDate).sort((a, b) => (b.inDate || '').localeCompare(a.inDate || '')).slice(0, 8);
+  const STATUS_COLOR_MAP = {
+    WIP: '#ff9830', AP: '#5794f2', NA: '#5c6370', AWCUSA: '#f05858',
+    AWINSA: '#b877d9', AWINSD: '#e0598f', RNC: '#73bf69', PTBO: '#f2cc0c', AA: '#d85a30'
+  };
+ 
+  // ── HTML ─────────────────────────────────────────────────────────────────────
+  return `
+  <div class="analytics-view" id="analytics-view">
+    <div class="gf-header">
+      <div>
+        <div class="gf-header-title">Workshop Analytics — Tinkr Auto OMR</div>
+        <div class="gf-header-sub">Live data · ${total} tickets · Last refreshed ${new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'})}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="gf-time-badge">All Time</span>
+        <button class="btn" style="font-size:11px;background:#181b1f;border-color:#2a2f38;color:#8e8e8e" onclick="renderContent()">⟳ Refresh</button>
+      </div>
+    </div>
+ 
+    <!-- ROW 1: KPI CARDS -->
+    <div class="gf-row gf-row-5">
+      <div class="gf-panel">
+        <div class="gf-panel-title"><span class="gf-dot" style="background:#5794f2"></span>Total Tickets</div>
+        <div class="gf-kpi-value">${total}</div>
+        <div class="gf-kpi-sub">All repair orders</div>
+      </div>
+      <div class="gf-panel">
+        <div class="gf-panel-title"><span class="gf-dot" style="background:#73bf69"></span>IN Workshop</div>
+        <div class="gf-kpi-value" style="color:#73bf69">${inWorkshop}</div>
+        <div class="gf-kpi-sub">Currently in bay</div>
+        <div class="gf-thresh"><div class="gf-thresh-fill" style="width:${Math.round((inWorkshop/total)*100)}%;background:#73bf69"></div></div>
+      </div>
+      <div class="gf-panel">
+        <div class="gf-panel-title"><span class="gf-dot" style="background:#ff9830"></span>In Progress</div>
+        <div class="gf-kpi-value" style="color:#ff9830">${wip}</div>
+        <div class="gf-kpi-sub">Active work orders</div>
+        <div class="gf-thresh"><div class="gf-thresh-fill" style="width:${Math.round((wip/total)*100)}%;background:#ff9830"></div></div>
+      </div>
+      <div class="gf-panel">
+        <div class="gf-panel-title"><span class="gf-dot" style="background:#f2cc0c"></span>Total Est. Value</div>
+        <div class="gf-kpi-value" style="color:#f2cc0c;font-size:22px">₹${(totalValue/100000).toFixed(2)}L</div>
+        <div class="gf-kpi-sub">Parts + Labour combined</div>
+      </div>
+      <div class="gf-panel">
+        <div class="gf-panel-title"><span class="gf-dot" style="background:#73bf69"></span>Close Rate</div>
+        <div class="gf-kpi-value" style="color:${closeRate >= 70 ? '#73bf69' : closeRate >= 40 ? '#ff9830' : '#f05858'}">${closeRate}%</div>
+        <div class="gf-kpi-sub">${rnc} of ${total} ready/collected</div>
+        <div class="gf-thresh"><div class="gf-thresh-fill" style="width:${closeRate}%;background:${closeRate>=70?'#73bf69':closeRate>=40?'#ff9830':'#f05858'}"></div></div>
+      </div>
+    </div>
+ 
+    <!-- ROW 2: Status bars + Type donut -->
+    <div class="gf-row gf-row-2">
+      <div class="gf-panel">
+        <div class="gf-panel-title"><span class="gf-dot" style="background:#5794f2"></span>Status Distribution</div>
+        ${statusBarData.length ? statusBarData.map(s => `
+          <div class="gf-bar-row">
+            <div class="gf-bar-label">${s.label}</div>
+            <div class="gf-bar-track"><div class="gf-bar-fill" style="width:${Math.round((s.count/maxStatus)*100)}%;background:${s.color}22;border-left:3px solid ${s.color}"></div></div>
+            <div class="gf-bar-val" style="color:${s.color}">${s.count}</div>
+          </div>`).join('') : '<div style="color:#5c6370;font-size:11px">No data</div>'}
+      </div>
+      <div class="gf-panel">
+        <div class="gf-panel-title"><span class="gf-dot" style="background:#ff9830"></span>Job Type Split</div>
+        <div class="gf-donut-wrap">
+          ${typeDonut}
+          <div class="gf-donut-legend">
+            ${typeData.filter(t=>t.count>0).map(t => `
+            <div class="gf-legend-item">
+              <span class="gf-legend-dot" style="background:${t.color}"></span>
+              ${t.label}
+              <span class="gf-legend-val">${t.count}</span>
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- ROW 3: Advisor performance + Avg RO gauge + Location -->
+    <div class="gf-row gf-row-3">
+      <div class="gf-panel" style="grid-column:span 2">
+        <div class="gf-panel-title"><span class="gf-dot" style="background:#b877d9"></span>Advisor Performance</div>
+        <table class="gf-table">
+          <thead><tr>
+            <th>Advisor</th><th>Cars</th><th>Parts Est.</th><th>Labour Est.</th><th>Total Est.</th><th>Workload</th>
+          </tr></thead>
+          <tbody>
+          ${advisorData.map(a => {
+            const tks = data.filter(t => t.advisor === a.name);
+            const parts  = tks.reduce((s,t)=>s+(t.parts||0),0);
+            const labour = tks.reduce((s,t)=>s+(t.labour||0),0);
+            const pct    = Math.round((a.count / maxAdv) * 100);
+            const colors = ['#5794f2','#73bf69','#ff9830','#b877d9','#f2cc0c','#e0598f','#f05858'];
+            const ADVISOR_LIST = ['BALA','DINESH','SHARUKH','GANESH','SHAHITH','ANANTH','ABINASH'];
+            const ci = ADVISOR_LIST.indexOf(a.name) % colors.length;
+            const c  = colors[ci];
+            return `<tr>
+              <td style="color:${c};font-weight:600">${a.name}</td>
+              <td style="color:#d8d9da">${a.count}</td>
+              <td style="color:#8e8e8e">₹${parts.toLocaleString('en-IN')}</td>
+              <td style="color:#8e8e8e">₹${labour.toLocaleString('en-IN')}</td>
+              <td style="color:#f2cc0c">₹${(parts+labour).toLocaleString('en-IN')}</td>
+              <td style="width:120px">
+                <div class="gf-thresh"><div class="gf-thresh-fill" style="width:${pct}%;background:${c}"></div></div>
+              </td>
+            </tr>`;
+          }).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="gf-panel">
+        <div class="gf-panel-title"><span class="gf-dot" style="background:#73bf69"></span>Vehicle Location</div>
+        <div class="gf-donut-wrap" style="flex-direction:column;align-items:center;gap:8px">
+          ${locDonut}
+          <div class="gf-donut-legend" style="flex-direction:row;flex-wrap:wrap;gap:12px;justify-content:center">
+            <div class="gf-legend-item"><span class="gf-legend-dot" style="background:#73bf69"></span>IN Workshop <span class="gf-legend-val" style="margin-left:4px">${locIN}</span></div>
+            <div class="gf-legend-item"><span class="gf-legend-dot" style="background:#f05858"></span>OUT <span class="gf-legend-val" style="margin-left:4px">${locOUT}</span></div>
+            <div class="gf-legend-item"><span class="gf-legend-dot" style="background:#ff9830"></span>YARD <span class="gf-legend-val" style="margin-left:4px">${locYARD}</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- ROW 4: Avg RO gauge + Parts vs Labour + Recent tickets -->
+    <div class="gf-row gf-row-3">
+      <div class="gf-panel" style="text-align:center">
+        <div class="gf-panel-title" style="justify-content:center"><span class="gf-dot" style="background:#f2cc0c"></span>Average RO Value</div>
+        ${gaugeSVG(Math.min(100, Math.round(avgRO / 10000 * 100)), avgRO > 50000 ? '#73bf69' : avgRO > 20000 ? '#ff9830' : '#f05858')}
+        <div class="gf-gauge-val">₹${avgRO.toLocaleString('en-IN')}</div>
+        <div class="gf-gauge-label">Per repair order</div>
+      </div>
+      <div class="gf-panel">
+        <div class="gf-panel-title"><span class="gf-dot" style="background:#5794f2"></span>Parts vs Labour</div>
+        <div style="margin-top:8px">
+          <div style="margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:#8e8e8e;margin-bottom:4px"><span>Parts Est.</span><span style="color:#5794f2">₹${totalParts.toLocaleString('en-IN')}</span></div>
+            <div class="gf-thresh"><div class="gf-thresh-fill" style="width:${totalValue>0?Math.round((totalParts/totalValue)*100):0}%;background:#5794f2"></div></div>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:#8e8e8e;margin-bottom:4px"><span>Labour Est.</span><span style="color:#73bf69">₹${totalLabour.toLocaleString('en-IN')}</span></div>
+            <div class="gf-thresh"><div class="gf-thresh-fill" style="width:${totalValue>0?Math.round((totalLabour/totalValue)*100):0}%;background:#73bf69"></div></div>
+          </div>
+          <div style="margin-top:14px;padding-top:12px;border-top:1px solid #2a2f38;display:flex;justify-content:space-between;font-size:11px">
+            <span style="color:#5c6370">P:L Ratio</span>
+            <span style="color:#d8d9da">${totalLabour > 0 ? (totalParts/totalLabour).toFixed(2) : '—'} : 1</span>
+          </div>
+          <div style="margin-top:6px;display:flex;justify-content:space-between;font-size:11px">
+            <span style="color:#5c6370">Insurance jobs</span>
+            <span style="color:#d8d9da">${data.filter(t=>t.ins && t.ins.trim()!='').length}</span>
+          </div>
+        </div>
+      </div>
+      <div class="gf-panel">
+        <div class="gf-panel-title"><span class="gf-dot" style="background:#f05858"></span>Recent Tickets Timeline</div>
+        <div class="gf-timeline-bar">
+          ${recent.map(t => {
+            const sc = STATUS_COLOR_MAP[t.status] || '#5c6370';
+            const cfg = STATUS_CONFIG[t.status] || {};
+            return `<div class="gf-tl-col" title="${t.customer} · ${t.reg} · ${cfg.label||t.status}">
+              <div class="gf-tl-seg" style="height:${20+Math.random()*25}px;background:${sc}55;border-top:2px solid ${sc}"></div>
+              <div class="gf-tl-label">${(t.reg||'').slice(-4)}</div>
+            </div>`;
+          }).join('')}
+        </div>
+        <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">
+          ${Object.entries(STATUS_COLOR_MAP).slice(0,5).map(([k,c])=>`
+            <span style="font-size:10px;padding:1px 5px;border-radius:2px;background:${c}22;color:${c};border-left:2px solid ${c}">
+              ${STATUS_CONFIG[k]?.label||k} ${byStatus[k]||0}
+            </span>`).join('')}
+        </div>
+      </div>
+    </div>
+ 
+  </div>`;
+}
+ 
 // ─── RENDER ─────────────────────────────────────────────────────────────────────
 function renderStats(data) {
   const wip = data.filter(t => t.status === 'WIP').length;
   const ap = data.filter(t => t.status === 'AP').length;
-  const rnc = data.filter(t => t.status === 'RNC').length;
   const totalParts = data.reduce((s, t) => s + (t.parts || 0), 0);
-  const totalLabour = data.reduce((s, t) => s + (t.labour || 0), 0);
-  const totalVal = totalParts + totalLabour;
-  const aro = data.length > 0 ? Math.round(totalVal / data.length) : 0;
   document.getElementById('stats-bar').innerHTML = `
-    <div class="stat-box"><div class="stat-num">${data.length}</div><div class="stat-label">Total Tickets</div></div>
-    <div class="stat-box"><div class="stat-num" style="color:#EF9F27">${wip}</div><div class="stat-label">In Progress</div></div>
-    <div class="stat-box"><div class="stat-num" style="color:#378ADD">${ap}</div><div class="stat-label">Awaiting Parts</div></div>
-    <div class="stat-box"><div class="stat-num" style="color:#639922">${rnc}</div><div class="stat-label">Ready / Collect</div></div>
-    <div class="stat-box"><div class="stat-num" style="color:#534AB7;font-size:16px">₹${totalVal >= 100000 ? (totalVal/100000).toFixed(1)+'L' : totalVal.toLocaleString()}</div><div class="stat-label">Total Value</div></div>
-    <div class="stat-box"><div class="stat-num" style="font-size:16px">₹${aro.toLocaleString()}</div><div class="stat-label">Avg Ticket (ARO)</div></div>
+    <div class="stat-box"><div class="stat-num">${data.length}</div><div class="stat-label">Total tickets</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#EF9F27">${wip}</div><div class="stat-label">In progress</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#378ADD">${ap}</div><div class="stat-label">Awaiting parts</div></div>
+    <div class="stat-box"><div class="stat-num" style="color:#639922">₹${(totalParts / 100000).toFixed(1)}L</div><div class="stat-label">Parts value</div></div>
   `;
 }
  
@@ -710,8 +1091,7 @@ function renderBoard(data) {
             ${typeBadge(t.type)}
             <span class="advisor-pill">${t.advisor}</span>
           </div>
-          ${(t.parts > 0 || t.labour > 0) ? `<div style="margin-top:6px;font-size:10px;color:var(--color-text-secondary);display:flex;justify-content:space-between"><span>Parts: ₹${(t.parts||0).toLocaleString()}</span><span style="font-weight:600;color:var(--color-text-primary)">₹${((t.parts||0)+(t.labour||0)).toLocaleString()}</span></div>` : ''}
-          ${t.inDate ? `<div style="margin-top:3px;font-size:10px;color:var(--color-text-tertiary)">${t.location ? '<span style="padding:1px 5px;border-radius:3px;font-size:9px;font-weight:600;background:'+(t.location==='IN'?'#EAF3DE':t.location==='OUT'?'#FCEBEB':'#FAEEDA')+';color:'+(t.location==='IN'?'#3B6D11':t.location==='OUT'?'#A32D2D':'#854F0B')+'">'+t.location+'</span> ' : ''}In: ${t.inDate}</div>` : ''}
+          ${t.parts > 0 ? `<div style="margin-top:6px;font-size:10px;color:var(--color-text-tertiary)">Parts: ₹${t.parts.toLocaleString()}</div>` : ''}
         </div>`).join('') : `<div style="padding:16px;text-align:center;font-size:12px;color:var(--color-text-tertiary)">No tickets</div>`}
       </div>
     </div>`;
@@ -721,13 +1101,9 @@ function renderBoard(data) {
 function renderList(data) {
   return `<div class="list-view"><table class="list-table">
     <thead><tr>
-      <th>ID</th><th>Job Card</th><th>In Date</th><th>Customer</th><th>Reg No</th><th>Model</th><th>Type</th><th>Status</th><th>Advisor</th><th style="text-align:right">Parts (₹)</th><th style="text-align:right">Labour (₹)</th><th style="text-align:right">Total (₹)</th><th>Location</th><th>Insurance</th>
+      <th>ID</th><th>Job Card</th><th>Date</th><th>Customer</th><th>Reg No</th><th>Model</th><th>Type</th><th>Status</th><th>Advisor</th><th>Parts (₹)</th><th>Insurance</th>
     </tr></thead>
-    <tbody>${data.map(t => {
-      const total = (t.parts || 0) + (t.labour || 0);
-      const locColor = t.location==='IN' ? '#3B6D11' : t.location==='OUT' ? '#A32D2D' : '#854F0B';
-      const locBg = t.location==='IN' ? '#EAF3DE' : t.location==='OUT' ? '#FCEBEB' : '#FAEEDA';
-      return `<tr onclick="openDetail('${t.id}')" style="cursor:pointer">
+    <tbody>${data.map(t => `<tr onclick="openDetail('${t.id}')" style="cursor:pointer">
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)">${t.id}</td>
       <td style="font-family:var(--font-mono);font-size:11px;color:#378ADD;font-weight:500">${t.jc || '—'}</td>
       <td style="font-size:11px;white-space:nowrap">${t.inDate || '-'}</td>
@@ -737,117 +1113,28 @@ function renderList(data) {
       <td>${typeBadge(t.type)}</td>
       <td>${statusBadge(t.status)}</td>
       <td>${t.advisor}</td>
-      <td style="text-align:right;font-family:var(--font-mono);font-size:11px">${t.parts > 0 ? t.parts.toLocaleString() : '-'}</td>
-      <td style="text-align:right;font-family:var(--font-mono);font-size:11px">${t.labour > 0 ? t.labour.toLocaleString() : '-'}</td>
-      <td style="text-align:right;font-family:var(--font-mono);font-size:11px;font-weight:500">${total > 0 ? total.toLocaleString() : '-'}</td>
-      <td><span style="padding:2px 7px;border-radius:4px;font-size:10px;font-weight:600;background:${locBg};color:${locColor}">${t.location || 'IN'}</span></td>
+      <td style="text-align:right">${t.parts > 0 ? t.parts.toLocaleString() : '-'}</td>
       <td style="font-size:11px;color:var(--color-text-secondary)">${t.ins || '-'}</td>
-    </tr>`;}).join('')}
+    </tr>`).join('')}
     </tbody>
   </table></div>`;
 }
  
-function renderDashboard(data) {
-  // Status breakdown table (like Image 4/7)
-  const statuses = Object.entries(STATUS_CONFIG);
-  const statusRows = statuses.map(([key, cfg]) => {
-    const group = data.filter(t => t.status === key);
-    if (!group.length) return '';
-    const parts = group.reduce((s,t) => s+(t.parts||0), 0);
-    const labour = group.reduce((s,t) => s+(t.labour||0), 0);
-    const total = parts + labour;
-    const aro = group.length > 0 ? Math.round(total/group.length) : 0;
-    return `<tr onclick="setView('list','${key}')" style="cursor:pointer">
-      <td>${statusBadge(key)}</td>
-      <td class="num" style="font-weight:600">${group.length}</td>
-      <td class="num">${parts > 0 ? '₹'+parts.toLocaleString() : '—'}</td>
-      <td class="num">${labour > 0 ? '₹'+labour.toLocaleString() : '—'}</td>
-      <td class="num" style="font-weight:600">${total > 0 ? '₹'+total.toLocaleString() : '—'}</td>
-      <td class="num">${aro > 0 ? '₹'+aro.toLocaleString() : '—'}</td>
-    </tr>`;
-  }).filter(Boolean).join('');
-
-  const totalParts = data.reduce((s,t)=>s+(t.parts||0),0);
-  const totalLabour = data.reduce((s,t)=>s+(t.labour||0),0);
-  const grandTotal = totalParts + totalLabour;
-  const grandAro = data.length > 0 ? Math.round(grandTotal/data.length) : 0;
-
-  // Advisor breakdown
-  const advisors = [...new Set(data.map(t=>t.advisor))].filter(Boolean).sort();
-  const advisorCards = advisors.map(adv => {
-    const group = data.filter(t=>t.advisor===adv);
-    const val = group.reduce((s,t)=>s+(t.parts||0)+(t.labour||0),0);
-    const wip = group.filter(t=>t.status==='WIP').length;
-    const rnc = group.filter(t=>t.status==='RNC').length;
-    return `<div class="advisor-card" onclick="setAdvisor('${adv}')" style="cursor:pointer">
-      <div class="advisor-card-name">${adv}</div>
-      <div class="advisor-card-stat"><span>Tickets</span><span>${group.length}</span></div>
-      <div class="advisor-card-stat"><span>In Progress</span><span style="color:#EF9F27">${wip}</span></div>
-      <div class="advisor-card-stat"><span>Ready/Collect</span><span style="color:#639922">${rnc}</span></div>
-      <div class="advisor-card-stat"><span>Total Value</span><span style="color:#534AB7">₹${val >= 100000 ? (val/100000).toFixed(1)+'L' : val.toLocaleString()}</span></div>
-    </div>`;
-  }).join('');
-
-  // Type breakdown
-  const types = ['Mechanical','Bodyshop','Conversion'];
-  const typeRows = types.map(tp => {
-    const group = data.filter(t=>t.type===tp);
-    if(!group.length) return '';
-    const val = group.reduce((s,t)=>s+(t.parts||0)+(t.labour||0),0);
-    return `<tr>
-      <td>${typeBadge(tp)}</td>
-      <td class="num" style="font-weight:600">${group.length}</td>
-      <td class="num">${val > 0 ? '₹'+val.toLocaleString() : '—'}</td>
-      <td class="num">${group.length > 0 ? Math.round((group.length/data.length)*100)+'%' : '—'}</td>
-    </tr>`;
-  }).join('');
-
-  return `<div class="dashboard-view">
-    <div>
-      <div class="dash-section-title">📊 Status Breakdown</div>
-      <table class="dash-table">
-        <thead><tr>
-          <th>Status</th><th style="text-align:right">Count</th><th style="text-align:right">Parts (₹)</th><th style="text-align:right">Labour (₹)</th><th style="text-align:right">Total (₹)</th><th style="text-align:right">ARO (₹)</th>
-        </tr></thead>
-        <tbody>${statusRows}</tbody>
-        <tfoot><tr class="total-row">
-          <td>Total</td>
-          <td class="num">${data.length}</td>
-          <td class="num">₹${totalParts.toLocaleString()}</td>
-          <td class="num">₹${totalLabour.toLocaleString()}</td>
-          <td class="num">₹${grandTotal.toLocaleString()}</td>
-          <td class="num">₹${grandAro.toLocaleString()}</td>
-        </tr></tfoot>
-      </table>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 260px;gap:16px;align-items:start">
-      <div>
-        <div class="dash-section-title">👤 Advisor Performance</div>
-        <div class="advisor-cards">${advisorCards || '<div style="font-size:12px;color:var(--color-text-tertiary)">No advisor data</div>'}</div>
-      </div>
-      <div>
-        <div class="dash-section-title">🔧 By Type</div>
-        <table class="dash-table">
-          <thead><tr>
-            <th>Type</th><th style="text-align:right">Count</th><th style="text-align:right">Value (₹)</th><th style="text-align:right">Share</th>
-          </tr></thead>
-          <tbody>${typeRows || '<tr><td colspan="4" style="text-align:center;color:var(--color-text-tertiary);padding:16px">No data</td></tr>'}</tbody>
-        </table>
-      </div>
-    </div>
-  </div>`;
-}
-
 function renderContent() {
   const data = getFiltered();
   renderStats(data);
   const el = document.getElementById('main-content');
+  if (currentView === 'analytics') {
+    document.getElementById('page-title').textContent = 'Analytics Dashboard';
+    el.style.overflow = 'hidden';
+    el.innerHTML = renderDashboard();
+    return;
+  }
+  el.style.overflow = '';
   document.getElementById('page-title').textContent = advisorFilter
     ? `Advisor: ${advisorFilter} (${data.length})`
-    : `Active Tickets — ${currentView === 'board' ? 'Board' : currentView === 'dashboard' ? 'Dashboard' : 'List'} (${data.length})`;
-  if (currentView === 'board') el.innerHTML = renderBoard(data);
-  else if (currentView === 'dashboard') el.innerHTML = renderDashboard(data);
-  else el.innerHTML = renderList(data);
+    : `Active Tickets — ${currentView === 'board' ? 'Board' : 'List'} (${data.length})`;
+  el.innerHTML = currentView === 'board' ? renderBoard(data) : renderList(data);
 }
  
 // ─── DETAIL PANEL ───────────────────────────────────────────────────────────────
