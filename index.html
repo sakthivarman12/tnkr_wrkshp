@@ -947,7 +947,7 @@ const COLUMNS = [
 async function loadTickets() {
   showLoading(true);
   try {
-    const { data, error } = await sb.from('tickets').select('*').order('created_at', { ascending: false });
+    const { data, error } = await sb.from('tickets').select('*').order('created_at', { ascending: true });
     showLoading(false);
     if (error) {
       setDbStatus('error');
@@ -1140,288 +1140,345 @@ function getFiltered() {
  
 // ─── ANALYTICS / GRAFANA DASHBOARD ────────────────────────────────────────────
 function renderDashboard() {
-  const data = getTimeFilteredTickets(); // time-filtered tickets for dashboard
+  const data = getTimeFilteredTickets();
   const total = data.length;
   if (total === 0) {
     return `<div class="analytics-view" style="display:flex;align-items:center;justify-content:center;height:60%">
       <div style="text-align:center;color:#5c6370;font-size:13px">No job card data available for this period</div>
     </div>`;
   }
- 
-  // ── Computed stats ──────────────────────────────────────────────────────────
+
+  // ── Stats ────────────────────────────────────────────────────────────────────
   const byStatus = {};
   const STATUSES = ['WIP','AP','NA','AWCUSA','AWINSA','AWINSD','RNC','AA','PTBO','APBO'];
   STATUSES.forEach(s => { byStatus[s] = data.filter(t => t.status === s).length; });
- 
-  const totalParts  = data.reduce((s, t) => s + (t.parts  || 0), 0);
-  const totalLabour = data.reduce((s, t) => s + (t.labour || 0), 0);
+  const totalParts  = data.reduce((s,t)=>s+(t.parts||0),0);
+  const totalLabour = data.reduce((s,t)=>s+(t.labour||0),0);
   const totalValue  = totalParts + totalLabour;
-  const avgRO       = total > 0 ? Math.round(totalValue / total) : 0;
-  const rnc         = byStatus['RNC'] || 0;
-  const closeRate   = total > 0 ? Math.round((rnc / total) * 100) : 0;
-  const inWorkshop  = data.filter(t => t.location === 'IN').length;
-  const wip         = byStatus['WIP'] || 0;
- 
-  // Advisor breakdown
+  const avgRO       = total>0?Math.round(totalValue/total):0;
+  const rnc         = byStatus['RNC']||0;
+  const wip         = byStatus['WIP']||0;
+  const closeRate   = total>0?Math.round((rnc/total)*100):0;
+  const inWorkshop  = data.filter(t=>t.location==='IN').length;
+  const locOUT      = data.filter(t=>t.location==='OUT').length;
+  const insJobs     = data.filter(t=>t.ins&&t.ins.trim()!='').length;
+  const pendingApproval = (byStatus['AWCUSA']||0)+(byStatus['AWINSA']||0);
+  const urgentCount = data.filter(t=>['AWCUSA','PTBO','AWINSD'].includes(t.status)).length;
+
+  // ── Advisor data ────────────────────────────────────────────────────────────
+  const ADVISOR_COLORS = {'BALA':'#5794f2','DINESH':'#ff9830','SHARUKH':'#73bf69','GANESH':'#b877d9','SHAHITH':'#f2cc0c','ANANTH':'#e0598f','ABINASH':'#4ecdc4'};
   const ADVISORS = ['BALA','DINESH','SHARUKH','GANESH','SHAHITH','ANANTH','ABINASH'];
-  const advisorData = ADVISORS.map(a => {
-    const tks = data.filter(t => t.advisor === a);
-    const val = tks.reduce((s, t) => s + (t.parts || 0) + (t.labour || 0), 0);
-    return { name: a, count: tks.length, value: val };
-  }).filter(a => a.count > 0).sort((a, b) => b.count - a.count);
-  const maxAdv = Math.max(...advisorData.map(a => a.count), 1);
- 
-  // Type breakdown
-  const typeData = [
-    { label: 'Mechanical', count: data.filter(t => t.type === 'Mechanical').length, color: '#5794f2' },
-    { label: 'Bodyshop',   count: data.filter(t => t.type === 'Bodyshop').length,   color: '#ff9830' },
-    { label: 'Conversion', count: data.filter(t => t.type === 'Conversion').length, color: '#73bf69' },
-  ];
- 
-  // Status bar chart data
-  const statusBarData = [
-    { label: 'Work In Progress',           key: 'WIP',    color: '#ff9830' },
-    { label: 'Awaiting Parts',             key: 'AP',     color: '#5794f2' },
-    { label: 'Not Allotted',               key: 'NA',     color: '#5c6370' },
-    { label: 'Awaiting Customer Approval', key: 'AWCUSA', color: '#f05858' },
-    { label: 'Awaiting Insurance Approval',key: 'AWINSA', color: '#b877d9' },
-    { label: 'Awaiting Insurance Document',key: 'AWINSD', color: '#e0598f' },
-    { label: 'Ready Not Collected',        key: 'RNC',    color: '#73bf69' },
-    { label: 'Parts Backorder',            key: 'PTBO',   color: '#f2cc0c' },
-  ].map(s => ({ ...s, count: byStatus[s.key] || 0 }))
-   .filter(s => s.count > 0);
-  const maxStatus = Math.max(...statusBarData.map(s => s.count), 1);
- 
-  // Location split
-  const locIN   = data.filter(t => t.location === 'IN').length;
-  const locOUT  = data.filter(t => t.location === 'OUT').length;
-  const locYARD = data.filter(t => t.location === 'YARD').length;
- 
-  // Donut SVG helper
-  function donutSVG(segments, cx, cy, r, strokeW) {
-    let cumAngle = -90;
-    const paths = segments.filter(s => s.value > 0).map(s => {
-      const startAngle = cumAngle;
-      const sweep = (s.value / total) * 360;
-      cumAngle += sweep;
-      const endAngle = cumAngle;
-      const x1 = cx + r * Math.cos(startAngle * Math.PI / 180);
-      const y1 = cy + r * Math.sin(startAngle * Math.PI / 180);
-      const x2 = cx + r * Math.cos(endAngle   * Math.PI / 180);
-      const y2 = cy + r * Math.sin(endAngle   * Math.PI / 180);
-      const large = sweep > 180 ? 1 : 0;
-      return `<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} Z" fill="${s.color}" opacity="0.9"/>`;
-    });
-    const innerR = r - strokeW;
-    return `<svg viewBox="0 0 ${cx*2} ${cy*2}" width="${cx*2}" height="${cy*2}">
-      ${paths.join('')}
-      <circle cx="${cx}" cy="${cy}" r="${innerR}" fill="#181b1f"/>
-    </svg>`;
+  const advStats = ADVISORS.map(a=>{
+    const tks=data.filter(t=>t.advisor===a);
+    const p=tks.reduce((s,t)=>s+(t.parts||0),0);
+    const l=tks.reduce((s,t)=>s+(t.labour||0),0);
+    const wips=tks.filter(t=>t.status==='WIP').length;
+    return {name:a,count:tks.length,parts:p,labour:l,total:p+l,wip:wips,color:ADVISOR_COLORS[a]||'#5794f2'};
+  }).filter(a=>a.count>0).sort((a,b)=>b.count-a.count);
+  const maxAdv=Math.max(...advStats.map(a=>a.count),1);
+
+  // ── Monthly trend (last 6 months) ──────────────────────────────────────────
+  const now = new Date();
+  const months=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+    const label=d.toLocaleString('en-IN',{month:'short'});
+    const mData=data.filter(t=>(t.inDate||t.jcDate||'').startsWith(key));
+    months.push({key,label,count:mData.length,val:mData.reduce((s,t)=>s+(t.parts||0)+(t.labour||0),0)});
   }
- 
-  const typeDonut = donutSVG(typeData.map(t => ({ value: t.count, color: t.color })), 55, 55, 50, 28);
-  const locDonut  = donutSVG([
-    { value: locIN,   color: '#73bf69' },
-    { value: locOUT,  color: '#f05858' },
-    { value: locYARD, color: '#ff9830' },
-  ], 55, 55, 50, 28);
- 
-  // Gauge arc SVG
-  function gaugeSVG(pct, color) {
-    const r = 60, cx = 80, cy = 75;
-    const startAngle = 200, endAngle = 340;
-    const arcLen = endAngle - startAngle;
-    const filled = arcLen * (pct / 100);
-    const toRad = a => a * Math.PI / 180;
-    const bgX1 = cx + r * Math.cos(toRad(startAngle)); const bgY1 = cy + r * Math.sin(toRad(startAngle));
-    const bgX2 = cx + r * Math.cos(toRad(startAngle + arcLen)); const bgY2 = cy + r * Math.sin(toRad(startAngle + arcLen));
-    const fgX2 = cx + r * Math.cos(toRad(startAngle + filled)); const fgY2 = cy + r * Math.sin(toRad(startAngle + filled));
-    const bgLarge = arcLen > 180 ? 1 : 0;
-    const fgLarge = filled > 180 ? 1 : 0;
-    return `<svg width="160" height="100" viewBox="0 0 160 100">
-      <path d="M${bgX1},${bgY1} A${r},${r} 0 ${bgLarge} 1 ${bgX2},${bgY2}" fill="none" stroke="#22272e" stroke-width="10" stroke-linecap="round"/>
-      ${pct > 0 ? `<path d="M${bgX1},${bgY1} A${r},${r} 0 ${fgLarge} 1 ${fgX2},${fgY2}" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round"/>` : ''}
-    </svg>`;
-  }
- 
-  // Recent tickets timeline (last 10 by inDate or id)
-  const recent = [...data].filter(t => t.inDate).sort((a, b) => (b.inDate || '').localeCompare(a.inDate || '')).slice(0, 8);
-  const STATUS_COLOR_MAP = {
-    WIP: '#ff9830', AP: '#5794f2', NA: '#5c6370', AWCUSA: '#f05858',
-    AWINSA: '#b877d9', AWINSD: '#e0598f', RNC: '#73bf69', PTBO: '#f2cc0c', AA: '#d85a30'
-  };
- 
-  // ── HTML ─────────────────────────────────────────────────────────────────────
+  const maxMonthCount=Math.max(...months.map(m=>m.count),1);
+  const maxMonthVal=Math.max(...months.map(m=>m.val),1);
+
+  // ── Status donut ────────────────────────────────────────────────────────────
+  const STATUS_COLOR_MAP={WIP:'#ff9830',AP:'#5794f2',NA:'#5c6370',AWCUSA:'#f05858',AWINSA:'#b877d9',AWINSD:'#e0598f',RNC:'#73bf69',PTBO:'#f2cc0c',AA:'#d85a30'};
+  const donutSegs=Object.entries(STATUS_COLOR_MAP).map(([k,c])=>({key:k,color:c,count:byStatus[k]||0})).filter(s=>s.count>0);
+  const donutTotal=donutSegs.reduce((s,x)=>s+x.count,0)||1;
+  let cumA=-90;
+  const donutPaths=donutSegs.map(s=>{
+    const sweep=(s.count/donutTotal)*360;
+    const sa=cumA; cumA+=sweep;
+    const x1=70+60*Math.cos(sa*Math.PI/180); const y1=70+60*Math.sin(sa*Math.PI/180);
+    const x2=70+60*Math.cos(cumA*Math.PI/180); const y2=70+60*Math.sin(cumA*Math.PI/180);
+    const large=sweep>180?1:0;
+    return `<path d="M70,70 L${x1},${y1} A60,60 0 ${large} 1 ${x2},${y2} Z" fill="${s.color}" opacity="0.9" class="donut-seg" data-key="${s.key}" onmouseenter="highlightSeg(this,'${s.key}','${STATUS_CONFIG[s.key]?.label||s.key}',${s.count})" onmouseleave="clearSegHighlight()"/>`;
+  }).join('');
+
+  // ── Oldest pending jobs ─────────────────────────────────────────────────────
+  const pending=data.filter(t=>t.status!=='RNC').sort((a,b)=>(a.inDate||'').localeCompare(b.inDate||'')).slice(0,5);
+
+  // ── HTML ────────────────────────────────────────────────────────────────────
   return `
-  <div class="analytics-view" id="analytics-view">
-    <div class="gf-header">
-      <div>
-        <div class="gf-header-title">Workshop Analytics — Tinkr Auto OMR</div>
-        <div class="gf-header-sub">Live data · ${total} job cards · ${timeFilter==='thisMonth'?'This month':timeFilter==='prev6months'?'Last 6 months':'All time'} · Last refreshed ${new Date().toLocaleTimeString('en-IN', {hour:'2-digit',minute:'2-digit'})}</div>
+<style>
+  .db-kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+  .db-kpi{background:#181b1f;border:1px solid #2a2f38;border-radius:6px;padding:14px 16px;position:relative;overflow:hidden;cursor:default;transition:border-color 0.2s}
+  .db-kpi:hover{border-color:#378ADD55}
+  .db-kpi-accent{position:absolute;top:0;left:0;width:3px;height:100%;border-radius:3px 0 0 3px}
+  .db-kpi-label{font-size:10px;font-weight:600;color:#5c6370;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+  .db-kpi-val{font-size:28px;font-weight:700;line-height:1;margin-bottom:4px;font-family:'DM Mono',monospace}
+  .db-kpi-sub{font-size:10px;color:#5c6370}
+  .db-kpi-bar{height:3px;background:#22272e;border-radius:2px;margin-top:8px;overflow:hidden}
+  .db-kpi-bar-fill{height:100%;border-radius:2px;transition:width .6s ease}
+  .db-mid-grid{display:grid;grid-template-columns:1fr 1fr 1.4fr;gap:10px;margin-bottom:12px}
+  .db-bot-grid{display:grid;grid-template-columns:1.6fr 1fr;gap:10px;margin-bottom:12px}
+  .db-panel{background:#181b1f;border:1px solid #2a2f38;border-radius:6px;padding:14px 16px}
+  .db-panel-title{font-size:10px;font-weight:600;color:#5c6370;text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+  .db-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+  /* advisor row */
+  .adv-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;cursor:pointer;padding:4px 6px;border-radius:4px;transition:background .15s}
+  .adv-row:hover{background:#22272e}
+  .adv-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+  .adv-name{font-size:11px;font-weight:600;color:#d8d9da;width:68px;flex-shrink:0}
+  .adv-bar-wrap{flex:1;height:8px;background:#22272e;border-radius:4px;overflow:hidden}
+  .adv-bar-fill{height:100%;border-radius:4px;transition:width .5s ease}
+  .adv-count{font-size:11px;color:#d8d9da;width:18px;text-align:right;flex-shrink:0}
+  .adv-val{font-size:10px;color:#5c6370;width:72px;text-align:right;flex-shrink:0}
+  /* monthly bars */
+  .month-chart{display:flex;align-items:flex-end;gap:6px;height:80px;margin-top:8px}
+  .month-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer}
+  .month-bar{width:100%;border-radius:3px 3px 0 0;transition:opacity .2s;min-height:3px}
+  .month-bar:hover{opacity:.75}
+  .month-label{font-size:9px;color:#5c6370;white-space:nowrap}
+  .month-count{font-size:9px;color:#8e8e8e}
+  /* status donut tooltip */
+  .donut-tooltip{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+  .donut-tooltip-val{font-size:22px;font-weight:700;color:#d8d9da}
+  .donut-tooltip-label{font-size:9px;color:#5c6370;line-height:1.3;max-width:60px;margin:0 auto}
+  /* pending table */
+  .pending-row{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:4px;margin-bottom:4px;border:1px solid #22272e;cursor:pointer;transition:background .15s}
+  .pending-row:hover{background:#22272e;border-color:#2a2f38}
+  .pending-age{font-size:10px;font-weight:700;color:#f05858;width:36px;flex-shrink:0}
+  .pending-reg{font-size:11px;font-family:monospace;color:#378ADD;width:80px;flex-shrink:0}
+  .pending-cust{font-size:11px;color:#d8d9da;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pending-status{font-size:9px;padding:2px 6px;border-radius:3px;flex-shrink:0}
+  /* toggle tabs */
+  .chart-tabs{display:flex;gap:4px;margin-bottom:8px}
+  .chart-tab{font-size:10px;padding:3px 8px;border-radius:3px;border:1px solid #2a2f38;background:#22272e;color:#5c6370;cursor:pointer;transition:all .15s}
+  .chart-tab.active{background:#378ADD22;border-color:#378ADD;color:#5794f2}
+  /* alert banner */
+  .urgent-banner{background:#f0585815;border:1px solid #f0585840;border-radius:6px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .15s}
+  .urgent-banner:hover{background:#f0585825}
+</style>
+
+<div class="analytics-view" id="analytics-view">
+
+  <!-- Header -->
+  <div class="gf-header">
+    <div>
+      <div class="gf-header-title">⚡ Workshop Command Centre — Tinkr Auto</div>
+      <div class="gf-header-sub">Live · ${total} job cards · ${timeFilter==='thisMonth'?'This month':timeFilter==='prev6months'?'Last 6 months':'All time'} · Refreshed ${new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})}</div>
+    </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <span class="gf-time-badge" style="${timeFilter==='all'?'background:#1a3a26;color:#73bf69;border-color:#73bf69':'background:#22272e;color:#5c6370;border-color:#2a2f38'}" onclick="setTimeFilter('all',document.getElementById('tf-all'))">All Time</span>
+      <span class="gf-time-badge" style="${timeFilter==='thisMonth'?'background:#1a3a26;color:#73bf69;border-color:#73bf69':'background:#22272e;color:#5c6370;border-color:#2a2f38'}" onclick="setTimeFilter('thisMonth',document.getElementById('tf-month'))">This Month</span>
+      <span class="gf-time-badge" style="${timeFilter==='prev6months'?'background:#1a3a26;color:#73bf69;border-color:#73bf69':'background:#22272e;color:#5c6370;border-color:#2a2f38'}" onclick="setTimeFilter('prev6months',document.getElementById('tf-6m'))">Prev 6 Months</span>
+      <button class="btn" style="font-size:10px;background:#181b1f;border-color:#2a2f38;color:#8e8e8e;padding:4px 10px" onclick="loadTickets();toast('⟳ Refreshing...')">⟳ Refresh</button>
+    </div>
+  </div>
+
+  <!-- Urgent alert -->
+  ${urgentCount>0?`<div class="urgent-banner" onclick="setView('board','all')">
+    <span style="font-size:18px">🚨</span>
+    <div>
+      <div style="font-size:12px;font-weight:600;color:#f05858">${urgentCount} job${urgentCount>1?'s':''} need immediate attention</div>
+      <div style="font-size:10px;color:#5c6370">Awaiting customer/insurance approval or parts backorder — click to view board</div>
+    </div>
+    <span style="margin-left:auto;font-size:11px;color:#f05858">View →</span>
+  </div>`:''}
+
+  <!-- ROW 1: KPI Cards -->
+  <div class="db-kpi-grid">
+    <div class="db-kpi" onclick="setView('board','all')" style="cursor:pointer">
+      <div class="db-kpi-accent" style="background:#5794f2"></div>
+      <div class="db-kpi-label">Total Job Cards</div>
+      <div class="db-kpi-val" style="color:#d8d9da">${total}</div>
+      <div class="db-kpi-sub">${insJobs} insurance · ${total-insJobs} cash</div>
+      <div class="db-kpi-bar"><div class="db-kpi-bar-fill" style="width:100%;background:#5794f2"></div></div>
+    </div>
+    <div class="db-kpi" onclick="setView('board','WIP')" style="cursor:pointer">
+      <div class="db-kpi-accent" style="background:#ff9830"></div>
+      <div class="db-kpi-label">Work In Progress</div>
+      <div class="db-kpi-val" style="color:#ff9830">${wip}</div>
+      <div class="db-kpi-sub">${Math.round((wip/total)*100)}% of total · ${inWorkshop} in workshop</div>
+      <div class="db-kpi-bar"><div class="db-kpi-bar-fill" style="width:${Math.round((wip/total)*100)}%;background:#ff9830"></div></div>
+    </div>
+    <div class="db-kpi">
+      <div class="db-kpi-accent" style="background:#f2cc0c"></div>
+      <div class="db-kpi-label">Total Est. Value</div>
+      <div class="db-kpi-val" style="color:#f2cc0c;font-size:22px">₹${(totalValue/100000).toFixed(2)}L</div>
+      <div class="db-kpi-sub">Avg ₹${avgRO.toLocaleString('en-IN')} / job · Parts ₹${(totalParts/100000).toFixed(1)}L · Labour ₹${(totalLabour/100000).toFixed(1)}L</div>
+      <div class="db-kpi-bar"><div class="db-kpi-bar-fill" style="width:${totalValue>0?Math.round((totalParts/totalValue)*100):0}%;background:#5794f2"></div></div>
+    </div>
+    <div class="db-kpi" onclick="setView('board','RNC')" style="cursor:pointer">
+      <div class="db-kpi-accent" style="background:${closeRate>=70?'#73bf69':closeRate>=40?'#ff9830':'#f05858'}"></div>
+      <div class="db-kpi-label">Ready Not Collected</div>
+      <div class="db-kpi-val" style="color:${closeRate>=70?'#73bf69':closeRate>=40?'#ff9830':'#f05858'}">${rnc}</div>
+      <div class="db-kpi-sub">${closeRate}% of total · ${locOUT} delivered out</div>
+      <div class="db-kpi-bar"><div class="db-kpi-bar-fill" style="width:${closeRate}%;background:${closeRate>=70?'#73bf69':closeRate>=40?'#ff9830':'#f05858'}"></div></div>
+    </div>
+  </div>
+
+  <!-- ROW 2: Advisor + Monthly Trend + Status Donut -->
+  <div class="db-mid-grid">
+
+    <!-- Advisor leaderboard -->
+    <div class="db-panel">
+      <div class="db-panel-title"><span class="db-dot" style="background:#b877d9"></span>Advisor Leaderboard</div>
+      ${advStats.map(a=>`
+        <div class="adv-row" onclick="setAdvisor('${a.name}')">
+          <div class="adv-avatar" style="background:${a.color}">${a.name.slice(0,2)}</div>
+          <div class="adv-name">${a.name}</div>
+          <div class="adv-bar-wrap"><div class="adv-bar-fill" style="width:${Math.round((a.count/maxAdv)*100)}%;background:${a.color}"></div></div>
+          <div class="adv-count" style="color:${a.color}">${a.count}</div>
+          <div class="adv-val">₹${a.total>=100000?(a.total/100000).toFixed(1)+'L':(a.total/1000).toFixed(0)+'K'}</div>
+        </div>`).join('')}
+    </div>
+
+    <!-- Monthly trend -->
+    <div class="db-panel">
+      <div class="db-panel-title"><span class="db-dot" style="background:#73bf69"></span>Monthly Intake Trend</div>
+      <div class="chart-tabs">
+        <div class="chart-tab active" id="tab-count" onclick="switchChartTab('count')">Job Count</div>
+        <div class="chart-tab" id="tab-val" onclick="switchChartTab('val')">Value (₹)</div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <span class="gf-time-badge" style="${timeFilter==='all'?'background:#1a3a26;color:#73bf69;border-color:#73bf69':'background:#22272e;color:#8e8e8e;border-color:#2a2f38'}" onclick="setTimeFilter('all',document.getElementById('tf-all'))" title="All Time">All Time</span>
-        <span class="gf-time-badge" style="${timeFilter==='thisMonth'?'background:#1a3a26;color:#73bf69;border-color:#73bf69':'background:#22272e;color:#8e8e8e;border-color:#2a2f38'}" onclick="setTimeFilter('thisMonth',document.getElementById('tf-month'))" title="This Month">This Month</span>
-        <span class="gf-time-badge" style="${timeFilter==='prev6months'?'background:#1a3a26;color:#73bf69;border-color:#73bf69':'background:#22272e;color:#8e8e8e;border-color:#2a2f38'}" onclick="setTimeFilter('prev6months',document.getElementById('tf-6m'))" title="Prev 6 Months">Prev 6 Months</span>
-        <button class="btn" style="font-size:11px;background:#181b1f;border-color:#2a2f38;color:#8e8e8e" onclick="renderContent()">⟳ Refresh</button>
+      <div class="month-chart" id="month-chart-count">
+        ${months.map(m=>`
+          <div class="month-col" title="${m.label}: ${m.count} jobs">
+            <div class="month-count">${m.count||''}</div>
+            <div class="month-bar" style="height:${Math.max(4,Math.round((m.count/maxMonthCount)*70))}px;background:${m.count===Math.max(...months.map(x=>x.count))?'#73bf69':'#5794f244'}"></div>
+            <div class="month-label">${m.label}</div>
+          </div>`).join('')}
+      </div>
+      <div class="month-chart" id="month-chart-val" style="display:none">
+        ${months.map(m=>`
+          <div class="month-col" title="${m.label}: ₹${m.val.toLocaleString('en-IN')}">
+            <div class="month-count" style="font-size:8px">${m.val>=100000?(m.val/100000).toFixed(1)+'L':m.val>=1000?(m.val/1000).toFixed(0)+'K':m.val||''}</div>
+            <div class="month-bar" style="height:${Math.max(4,Math.round((m.val/maxMonthVal)*70))}px;background:${m.val===Math.max(...months.map(x=>x.val))?'#f2cc0c':'#f2cc0c44'}"></div>
+            <div class="month-label">${m.label}</div>
+          </div>`).join('')}
       </div>
     </div>
- 
-    <!-- ROW 1: KPI CARDS -->
-    <div class="gf-row gf-row-5">
-      <div class="gf-panel">
-        <div class="gf-panel-title"><span class="gf-dot" style="background:#5794f2"></span>Total Job Cards</div>
-        <div class="gf-kpi-value">${total}</div>
-        <div class="gf-kpi-sub">All repair orders</div>
-      </div>
-      <div class="gf-panel">
-        <div class="gf-panel-title"><span class="gf-dot" style="background:#73bf69"></span>IN Workshop</div>
-        <div class="gf-kpi-value" style="color:#73bf69">${inWorkshop}</div>
-        <div class="gf-kpi-sub">Currently in bay</div>
-        <div class="gf-thresh"><div class="gf-thresh-fill" style="width:${Math.round((inWorkshop/total)*100)}%;background:#73bf69"></div></div>
-      </div>
-      <div class="gf-panel">
-        <div class="gf-panel-title"><span class="gf-dot" style="background:#ff9830"></span>Work In Progress</div>
-        <div class="gf-kpi-value" style="color:#ff9830">${wip}</div>
-        <div class="gf-kpi-sub">Active work orders</div>
-        <div class="gf-thresh"><div class="gf-thresh-fill" style="width:${Math.round((wip/total)*100)}%;background:#ff9830"></div></div>
-      </div>
-      <div class="gf-panel">
-        <div class="gf-panel-title"><span class="gf-dot" style="background:#f2cc0c"></span>Total Est. Value</div>
-        <div class="gf-kpi-value" style="color:#f2cc0c;font-size:22px">₹${(totalValue/100000).toFixed(2)}L</div>
-        <div class="gf-kpi-sub">Parts + Labour combined</div>
-      </div>
-      <div class="gf-panel">
-        <div class="gf-panel-title"><span class="gf-dot" style="background:#73bf69"></span>Close Rate</div>
-        <div class="gf-kpi-value" style="color:${closeRate >= 70 ? '#73bf69' : closeRate >= 40 ? '#ff9830' : '#f05858'}">${closeRate}%</div>
-        <div class="gf-kpi-sub">${rnc} of ${total} ready not collected</div>
-        <div class="gf-thresh"><div class="gf-thresh-fill" style="width:${closeRate}%;background:${closeRate>=70?'#73bf69':closeRate>=40?'#ff9830':'#f05858'}"></div></div>
-      </div>
-    </div>
- 
-    <!-- ROW 2: Status bars + Type donut -->
-    <div class="gf-row gf-row-2">
-      <div class="gf-panel">
-        <div class="gf-panel-title"><span class="gf-dot" style="background:#5794f2"></span>Status Distribution</div>
-        ${statusBarData.length ? statusBarData.map(s => `
-          <div class="gf-bar-row">
-            <div class="gf-bar-label">${s.label}</div>
-            <div class="gf-bar-track"><div class="gf-bar-fill" style="width:${Math.round((s.count/maxStatus)*100)}%;background:${s.color}22;border-left:3px solid ${s.color}"></div></div>
-            <div class="gf-bar-val" style="color:${s.color}">${s.count}</div>
-          </div>`).join('') : '<div style="color:#5c6370;font-size:11px">No data</div>'}
-      </div>
-      <div class="gf-panel">
-        <div class="gf-panel-title"><span class="gf-dot" style="background:#ff9830"></span>Job Type Split</div>
-        <div class="gf-donut-wrap">
-          ${typeDonut}
-          <div class="gf-donut-legend">
-            ${typeData.filter(t=>t.count>0).map(t => `
-            <div class="gf-legend-item">
-              <span class="gf-legend-dot" style="background:${t.color}"></span>
-              ${t.label}
-              <span class="gf-legend-val">${t.count}</span>
+
+    <!-- Status donut interactive -->
+    <div class="db-panel" style="position:relative">
+      <div class="db-panel-title"><span class="db-dot" style="background:#5794f2"></span>Status Distribution</div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="position:relative;flex-shrink:0">
+          <svg viewBox="0 0 140 140" width="120" height="120">
+            ${donutPaths}
+            <circle cx="70" cy="70" r="38" fill="#181b1f"/>
+          </svg>
+          <div class="donut-tooltip" id="donut-tooltip">
+            <div class="donut-tooltip-val" id="donut-val">${total}</div>
+            <div class="donut-tooltip-label" id="donut-label">Total Jobs</div>
+          </div>
+        </div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:5px">
+          ${donutSegs.map(s=>`
+            <div style="display:flex;align-items:center;gap:6px;cursor:pointer;padding:2px 4px;border-radius:3px;transition:background .15s" onmouseenter="highlightSeg(null,'${s.key}','${STATUS_CONFIG[s.key]?.label||s.key}',${s.count})" onmouseleave="clearSegHighlight()" onclick="setView('board','${s.key}')">
+              <span style="width:8px;height:8px;border-radius:2px;background:${s.color};flex-shrink:0;display:inline-block"></span>
+              <span style="font-size:10px;color:#8e8e8e;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${STATUS_CONFIG[s.key]?.label||s.key}</span>
+              <span style="font-size:11px;font-weight:600;color:${s.color}">${s.count}</span>
             </div>`).join('')}
-          </div>
         </div>
       </div>
     </div>
- 
-    <!-- ROW 3: Advisor performance + Avg RO gauge + Location -->
-    <div class="gf-row gf-row-3">
-      <div class="gf-panel" style="grid-column:span 2">
-        <div class="gf-panel-title"><span class="gf-dot" style="background:#b877d9"></span>Advisor Performance</div>
-        <table class="gf-table">
-          <thead><tr>
-            <th>Advisor</th><th>Cars</th><th>Parts Est.</th><th>Labour Est.</th><th>Total Est.</th><th>Workload</th>
-          </tr></thead>
-          <tbody>
-          ${advisorData.map(a => {
-            const tks = data.filter(t => t.advisor === a.name);
-            const parts  = tks.reduce((s,t)=>s+(t.parts||0),0);
-            const labour = tks.reduce((s,t)=>s+(t.labour||0),0);
-            const pct    = Math.round((a.count / maxAdv) * 100);
-            const colors = ['#5794f2','#73bf69','#ff9830','#b877d9','#f2cc0c','#e0598f','#f05858'];
-            const ADVISOR_LIST = ['BALA','DINESH','SHARUKH','GANESH','SHAHITH','ANANTH','ABINASH'];
-            const ci = ADVISOR_LIST.indexOf(a.name) % colors.length;
-            const c  = colors[ci];
-            return `<tr>
-              <td style="color:${c};font-weight:600">${a.name}</td>
-              <td style="color:#d8d9da">${a.count}</td>
-              <td style="color:#8e8e8e">₹${parts.toLocaleString('en-IN')}</td>
-              <td style="color:#8e8e8e">₹${labour.toLocaleString('en-IN')}</td>
-              <td style="color:#f2cc0c">₹${(parts+labour).toLocaleString('en-IN')}</td>
-              <td style="width:120px">
-                <div class="gf-thresh"><div class="gf-thresh-fill" style="width:${pct}%;background:${c}"></div></div>
-              </td>
-            </tr>`;
-          }).join('')}
-          </tbody>
-        </table>
+  </div>
+
+  <!-- ROW 3: Oldest Pending Jobs + Quick Stats -->
+  <div class="db-bot-grid">
+
+    <!-- Oldest pending -->
+    <div class="db-panel">
+      <div class="db-panel-title"><span class="db-dot" style="background:#f05858"></span>Oldest Pending Jobs — Needs Action First
+        <span style="margin-left:auto;font-size:9px;color:#5c6370">sorted by in-date ↑</span>
       </div>
-      <div class="gf-panel">
-        <div class="gf-panel-title"><span class="gf-dot" style="background:#73bf69"></span>Vehicle Location</div>
-        <div class="gf-donut-wrap" style="flex-direction:column;align-items:center;gap:8px">
-          ${locDonut}
-          <div class="gf-donut-legend" style="flex-direction:row;flex-wrap:wrap;gap:12px;justify-content:center">
-            <div class="gf-legend-item"><span class="gf-legend-dot" style="background:#73bf69"></span>IN Workshop <span class="gf-legend-val" style="margin-left:4px">${locIN}</span></div>
-            <div class="gf-legend-item"><span class="gf-legend-dot" style="background:#f05858"></span>OUT <span class="gf-legend-val" style="margin-left:4px">${locOUT}</span></div>
-            <div class="gf-legend-item"><span class="gf-legend-dot" style="background:#ff9830"></span>YARD <span class="gf-legend-val" style="margin-left:4px">${locYARD}</span></div>
-          </div>
-        </div>
+      ${pending.length ? pending.map(t=>{
+        const inD=t.inDate||t.jcDate||'';
+        const age=inD?Math.floor((Date.now()-new Date(inD))/86400000):0;
+        const sc=STATUS_COLOR_MAP[t.status]||'#5c6370';
+        const slabel=STATUS_CONFIG[t.status]?.label||t.status;
+        return `<div class="pending-row" onclick="openDetail('${t.id}')">
+          <div class="pending-age">${age}d</div>
+          <div class="pending-reg">${t.reg}</div>
+          <div class="pending-cust">${t.customer} · <span style="color:#5c6370">${t.model}</span></div>
+          <span style="font-size:10px;color:${sc};background:${sc}18;padding:2px 6px;border-radius:3px;flex-shrink:0">${slabel}</span>
+          <span style="font-size:10px;color:#5c6370;width:50px;text-align:right;flex-shrink:0">${t.advisor}</span>
+        </div>`;
+      }).join('') : '<div style="color:#5c6370;font-size:11px;text-align:center;padding:16px">No pending jobs</div>'}
+      <div style="margin-top:8px;text-align:right">
+        <span style="font-size:10px;color:#378ADD;cursor:pointer" onclick="setView('list','all')">View all ${total} jobs →</span>
       </div>
     </div>
- 
-    <!-- ROW 4: Avg RO gauge + Parts vs Labour + Recent tickets -->
-    <div class="gf-row gf-row-3">
-      <div class="gf-panel" style="text-align:center">
-        <div class="gf-panel-title" style="justify-content:center"><span class="gf-dot" style="background:#f2cc0c"></span>Average RO Value</div>
-        ${gaugeSVG(Math.min(100, Math.round(avgRO / 10000 * 100)), avgRO > 50000 ? '#73bf69' : avgRO > 20000 ? '#ff9830' : '#f05858')}
-        <div class="gf-gauge-val">₹${avgRO.toLocaleString('en-IN')}</div>
-        <div class="gf-gauge-label">Per repair order</div>
-      </div>
-      <div class="gf-panel">
-        <div class="gf-panel-title"><span class="gf-dot" style="background:#5794f2"></span>Parts vs Labour</div>
-        <div style="margin-top:8px">
-          <div style="margin-bottom:10px">
-            <div style="display:flex;justify-content:space-between;font-size:11px;color:#8e8e8e;margin-bottom:4px"><span>Parts Est.</span><span style="color:#5794f2">₹${totalParts.toLocaleString('en-IN')}</span></div>
-            <div class="gf-thresh"><div class="gf-thresh-fill" style="width:${totalValue>0?Math.round((totalParts/totalValue)*100):0}%;background:#5794f2"></div></div>
-          </div>
-          <div>
-            <div style="display:flex;justify-content:space-between;font-size:11px;color:#8e8e8e;margin-bottom:4px"><span>Labour Est.</span><span style="color:#73bf69">₹${totalLabour.toLocaleString('en-IN')}</span></div>
-            <div class="gf-thresh"><div class="gf-thresh-fill" style="width:${totalValue>0?Math.round((totalLabour/totalValue)*100):0}%;background:#73bf69"></div></div>
-          </div>
-          <div style="margin-top:14px;padding-top:12px;border-top:1px solid #2a2f38;display:flex;justify-content:space-between;font-size:11px">
-            <span style="color:#5c6370">P:L Ratio</span>
-            <span style="color:#d8d9da">${totalLabour > 0 ? (totalParts/totalLabour).toFixed(2) : '—'} : 1</span>
-          </div>
-          <div style="margin-top:6px;display:flex;justify-content:space-between;font-size:11px">
-            <span style="color:#5c6370">Insurance jobs</span>
-            <span style="color:#d8d9da">${data.filter(t=>t.ins && t.ins.trim()!='').length}</span>
-          </div>
+
+    <!-- Right: quick stat pills -->
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div class="db-panel" style="flex:1">
+        <div class="db-panel-title"><span class="db-dot" style="background:#5794f2"></span>Parts vs Labour Split</div>
+        <div style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#8e8e8e;margin-bottom:3px"><span>Parts</span><span style="color:#5794f2;font-weight:600">₹${totalParts.toLocaleString('en-IN')}</span></div>
+          <div style="height:8px;background:#22272e;border-radius:4px;overflow:hidden"><div style="height:100%;width:${totalValue>0?Math.round((totalParts/totalValue)*100):0}%;background:linear-gradient(90deg,#5794f2,#378ADD);border-radius:4px"></div></div>
+        </div>
+        <div style="margin-bottom:8px">
+          <div style="display:flex;justify-content:space-between;font-size:11px;color:#8e8e8e;margin-bottom:3px"><span>Labour</span><span style="color:#73bf69;font-weight:600">₹${totalLabour.toLocaleString('en-IN')}</span></div>
+          <div style="height:8px;background:#22272e;border-radius:4px;overflow:hidden"><div style="height:100%;width:${totalValue>0?Math.round((totalLabour/totalValue)*100):0}%;background:linear-gradient(90deg,#73bf69,#2ECC71);border-radius:4px"></div></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;padding-top:8px;border-top:1px solid #22272e">
+          <span style="color:#5c6370">P:L Ratio</span>
+          <span style="color:#d8d9da;font-weight:600">${totalLabour>0?(totalParts/totalLabour).toFixed(2):'—'} : 1</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:5px">
+          <span style="color:#5c6370">Insurance jobs</span>
+          <span style="color:#b877d9;font-weight:600">${insJobs} / ${total}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:11px;margin-top:5px">
+          <span style="color:#5c6370">Pending approval</span>
+          <span style="color:#f05858;font-weight:600">${pendingApproval}</span>
         </div>
       </div>
-      <div class="gf-panel">
-        <div class="gf-panel-title"><span class="gf-dot" style="background:#f05858"></span>Recent Tickets Timeline</div>
-        <div class="gf-timeline-bar">
-          ${recent.map(t => {
-            const sc = STATUS_COLOR_MAP[t.status] || '#5c6370';
-            const cfg = STATUS_CONFIG[t.status] || {};
-            return `<div class="gf-tl-col" title="${t.customer} · ${t.reg} · ${cfg.label||t.status}">
-              <div class="gf-tl-seg" style="height:${20+Math.random()*25}px;background:${sc}55;border-top:2px solid ${sc}"></div>
-              <div class="gf-tl-label">${(t.reg||'').slice(-4)}</div>
-            </div>`;
-          }).join('')}
-        </div>
-        <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px">
-          ${Object.entries(STATUS_COLOR_MAP).slice(0,5).map(([k,c])=>`
-            <span style="font-size:10px;padding:1px 5px;border-radius:2px;background:${c}22;color:${c};border-left:2px solid ${c}">
-              ${STATUS_CONFIG[k]?.label||k} ${byStatus[k]||0}
-            </span>`).join('')}
-        </div>
+      <div class="db-panel" style="flex:1">
+        <div class="db-panel-title"><span class="db-dot" style="background:#73bf69"></span>Vehicle Location</div>
+        ${[['IN Workshop','#73bf69',inWorkshop],['Delivered OUT','#f05858',locOUT],['YARD','#ff9830',data.filter(t=>t.location==='YARD').length]].map(([lbl,c,cnt])=>`
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:7px">
+            <span style="width:8px;height:8px;border-radius:50%;background:${c};flex-shrink:0"></span>
+            <span style="font-size:11px;color:#8e8e8e;flex:1">${lbl}</span>
+            <span style="font-size:13px;font-weight:700;color:${c}">${cnt}</span>
+            <div style="width:50px;height:5px;background:#22272e;border-radius:3px;overflow:hidden"><div style="height:100%;width:${total>0?Math.round((cnt/total)*100):0}%;background:${c};border-radius:3px"></div></div>
+          </div>`).join('')}
       </div>
     </div>
- 
-  </div>`;
+
+  </div>
+
+</div>
+
+<script>
+function switchChartTab(tab) {
+  document.getElementById('month-chart-count').style.display = tab==='count'?'flex':'none';
+  document.getElementById('month-chart-val').style.display   = tab==='val'?'flex':'none';
+  document.querySelectorAll('.chart-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+}
+function highlightSeg(el, key, label, count) {
+  document.getElementById('donut-val').textContent   = count;
+  document.getElementById('donut-label').textContent = label;
+  document.getElementById('donut-val').style.color   = '${STATUS_COLOR_MAP.WIP}';
+}
+function clearSegHighlight() {
+  document.getElementById('donut-val').textContent   = '${total}';
+  document.getElementById('donut-label').textContent = 'Total Jobs';
+  document.getElementById('donut-val').style.color   = '#d8d9da';
+}
+// Fix donut highlight color dynamically
+const STATUS_COLORS_MAP=${JSON.stringify(STATUS_COLOR_MAP)};
+function highlightSeg(el, key, label, count) {
+  const c = STATUS_COLORS_MAP[key]||'#d8d9da';
+  document.getElementById('donut-val').textContent   = count;
+  document.getElementById('donut-label').textContent = label;
+  document.getElementById('donut-val').style.color   = c;
+}
+</script>`;
+}
 }
  
 // ─── DAILY TASK ASSIGNMENT ─────────────────────────────────────────────────────
@@ -1562,8 +1619,14 @@ function typeBadge(type) {
 }
  
 function renderBoard(data) {
+  // Sort ascending: oldest inDate first so oldest jobs are at top
+  const sorted = [...data].sort((a, b) => {
+    const da = a.inDate || a.jcDate || '';
+    const db = b.inDate || b.jcDate || '';
+    return da.localeCompare(db);
+  });
   return `<div class="board-view">${COLUMNS.map(col => {
-    const cards = data.filter(t => t.status === col.key);
+    const cards = sorted.filter(t => t.status === col.key);
     const cfg = STATUS_CONFIG[col.key];
     return `<div class="column">
       <div class="col-header" style="background:${cfg.bg}20;border:0.5px solid ${cfg.col}40">
@@ -1588,11 +1651,17 @@ function renderBoard(data) {
 }
  
 function renderList(data) {
+  // Ascending: oldest inDate first
+  const sorted = [...data].sort((a, b) => {
+    const da = a.inDate || a.jcDate || '';
+    const db = b.inDate || b.jcDate || '';
+    return da.localeCompare(db);
+  });
   return `<div class="list-view"><table class="list-table">
     <thead><tr>
       <th>ID</th><th>Job Card</th><th>Date</th><th>Customer</th><th>Reg No</th><th>Model</th><th>Type</th><th>Status</th><th>Advisor</th><th>Parts (₹)</th><th>Insurance</th>
     </tr></thead>
-    <tbody>${data.map(t => `<tr onclick="openDetail('${t.id}')" style="cursor:pointer">
+    <tbody>${sorted.map(t => `<tr onclick="openDetail('${t.id}')" style="cursor:pointer">
       <td style="font-family:var(--font-mono);font-size:11px;color:var(--color-text-secondary)">${t.id}</td>
       <td style="font-family:var(--font-mono);font-size:11px;color:#378ADD;font-weight:500">${t.jc || '—'}</td>
       <td style="font-size:11px;white-space:nowrap">${t.inDate || '-'}</td>
