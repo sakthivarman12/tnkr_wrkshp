@@ -297,6 +297,34 @@
   /* Loading */
   #loading-overlay { position: fixed; inset: 0; background: rgba(255,255,255,0.7); z-index: 500; display: none; align-items: center; justify-content: center; }
   #loading-overlay.show { display: flex; }
+  /* ── DIAGNOSTIC PANEL ── */
+  #diag-panel {
+    position: fixed; bottom: 16px; right: 16px; z-index: 9999;
+    background: #0f1117; border: 1px solid #2a2f38; border-radius: 8px;
+    padding: 12px 14px; font-family: 'SF Mono','Fira Code',monospace;
+    font-size: 11px; color: #8e8e8e; min-width: 280px; max-width: 360px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  }
+  #diag-panel .diag-title {
+    font-size: 10px; font-weight: 700; color: #5c6370;
+    text-transform: uppercase; letter-spacing: .1em; margin-bottom: 8px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  #diag-panel .diag-close {
+    cursor: pointer; color: #5c6370; font-size: 13px; line-height: 1;
+  }
+  #diag-panel .diag-close:hover { color: #d8d9da; }
+  .diag-row { display: flex; align-items: flex-start; gap: 7px; margin-bottom: 5px; line-height: 1.4; }
+  .diag-icon { flex-shrink: 0; width: 14px; text-align: center; }
+  .diag-ok   { color: #73bf69; }
+  .diag-err  { color: #f05858; }
+  .diag-warn { color: #ff9830; }
+  .diag-spin { color: #5794f2; animation: diagspin 1s linear infinite; display: inline-block; }
+  @keyframes diagspin { to { transform: rotate(360deg); } }
+  .diag-label { color: #8e8e8e; }
+  .diag-val   { color: #d8d9da; margin-left: 3px; }
+  .diag-fix   { margin-top: 8px; padding: 8px 10px; background: #1a2233; border: 1px solid #2a3f5f; border-radius: 5px; color: #7eb8f7; font-size: 10px; line-height: 1.6; }
+  .diag-fix a { color: #5794f2; text-decoration: underline; cursor: pointer; }
   .spinner { width: 24px; height: 24px; border: 2px solid #e8e7e3; border-top-color: #378ADD; border-radius: 50%; animation: spin 0.6s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -444,6 +472,18 @@
  
 <div id="loading-overlay"><div class="spinner"></div></div>
 <div id="toast"></div>
+
+<!-- ── DIAGNOSTIC PANEL ── -->
+<div id="diag-panel">
+  <div class="diag-title">
+    <span>🔬 Connection Diagnostics</span>
+    <span class="diag-close" onclick="document.getElementById('diag-panel').style.display='none'">✕</span>
+  </div>
+  <div id="diag-rows">
+    <div class="diag-row"><span class="diag-icon diag-spin">↻</span><span class="diag-label">Running checks…</span></div>
+  </div>
+  <div id="diag-fix" class="diag-fix" style="display:none"></div>
+</div>
  
 <div class="app" id="app">
   <div class="sidebar">
@@ -2113,6 +2153,162 @@ function initApp() {
 }
  
 initApp();
+
+// ─── DIAGNOSTICS ────────────────────────────────────────────────────────────
+(async function runDiagnostics() {
+  const panel = document.getElementById('diag-panel');
+  const rowsEl = document.getElementById('diag-rows');
+  const fixEl  = document.getElementById('diag-fix');
+  const issues = [];
+
+  function row(icon, cls, label, val) {
+    return `<div class="diag-row"><span class="diag-icon ${cls}">${icon}</span><span class="diag-label">${label}</span>${val ? `<span class="diag-val">${val}</span>` : ''}</div>`;
+  }
+
+  function render(rows, fix) {
+    rowsEl.innerHTML = rows.join('');
+    if (fix) { fixEl.style.display = 'block'; fixEl.innerHTML = fix; }
+    else      { fixEl.style.display = 'none'; }
+  }
+
+  render([row('↻','diag-spin','Checking Supabase CDN…','')]);
+
+  // 1. Protocol check
+  const proto = location.protocol;
+  const isFile = proto === 'file:';
+
+  // 2. Wait up to 4s for Supabase CDN
+  let sbLoaded = false;
+  for (let i = 0; i < 20; i++) {
+    if (window.supabase && typeof window.supabase.createClient === 'function') { sbLoaded = true; break; }
+    await new Promise(r => setTimeout(r, 200));
+  }
+
+  // 3. Try a direct fetch to Supabase REST API
+  let corsOk = false, corsErr = '';
+  const cfg = getConfig();
+  if (cfg.url && sbLoaded) {
+    try {
+      const r = await fetch(cfg.url + '/rest/v1/', {
+        headers: { 'apikey': cfg.key, 'Authorization': 'Bearer ' + cfg.key }
+      });
+      corsOk = r.ok || r.status === 200 || r.status === 404; // 404 is fine — means server replied
+      if (!corsOk) corsErr = 'HTTP ' + r.status;
+    } catch(e) {
+      corsErr = e.message || 'fetch failed';
+    }
+  }
+
+  // 4. Check if tickets table returned data
+  let tableOk = false, tableErr = '', rowCount = 0, rlsWarning = false;
+  if (cfg.url && sbLoaded) {
+    try {
+      const testSb = window.supabase.createClient(cfg.url, cfg.key);
+      const { data, error, count } = await testSb.from('tickets').select('id', { count: 'exact', head: false }).limit(1);
+      if (error) {
+        tableErr = error.message || error.code || JSON.stringify(error);
+        if (error.code === '42501' || (error.message||'').includes('permission') || (error.message||'').includes('policy')) rlsWarning = true;
+      } else {
+        tableOk = true;
+        // Re-use already-loaded tickets if available
+        rowCount = tickets.length || (data ? data.length : 0);
+      }
+    } catch(e) {
+      tableErr = e.message;
+    }
+  }
+
+  // ── Build report ────────────────────────────────────────────────────────────
+  const rows = [];
+
+  // Protocol
+  if (isFile) {
+    rows.push(row('✗','diag-err','Protocol:','<b>file://</b> (will block network)'));
+    issues.push('file');
+  } else {
+    rows.push(row('✓','diag-ok','Protocol:',proto + '//'));
+  }
+
+  // CDN
+  if (sbLoaded) {
+    rows.push(row('✓','diag-ok','Supabase CDN:','loaded ✓'));
+  } else {
+    rows.push(row('✗','diag-err','Supabase CDN:','FAILED to load'));
+    issues.push('cdn');
+  }
+
+  // Supabase URL configured
+  if (cfg.url) {
+    rows.push(row('✓','diag-ok','Supabase URL:',cfg.url.replace('https://','').split('.')[0] + '.supabase.co'));
+  } else {
+    rows.push(row('✗','diag-err','Supabase URL:','not set'));
+    issues.push('url');
+  }
+
+  // CORS / network
+  if (!sbLoaded || !cfg.url) {
+    rows.push(row('—','diag-warn','Network reach:','skipped'));
+  } else if (corsOk) {
+    rows.push(row('✓','diag-ok','Network reach:','Supabase reachable ✓'));
+  } else {
+    rows.push(row('✗','diag-err','Network reach:',corsErr || 'blocked'));
+    issues.push('cors');
+  }
+
+  // Table / RLS
+  if (!sbLoaded || !cfg.url) {
+    rows.push(row('—','diag-warn','tickets table:','skipped'));
+  } else if (tableOk) {
+    rows.push(row('✓','diag-ok','tickets table:','accessible ✓'));
+    rows.push(row('✓','diag-ok','Rows loaded:', tickets.length + ' tickets in memory'));
+    if (tickets.length === 0) {
+      rows.push(row('⚠','diag-warn','Data:','Table is empty — no job cards yet'));
+    }
+  } else {
+    rows.push(row('✗','diag-err','tickets table:', tableErr || 'query failed'));
+    if (rlsWarning) issues.push('rls');
+    else issues.push('table');
+  }
+
+  // Current view state
+  rows.push(row('ℹ','diag-warn','Current view:',currentView + ' / filter: ' + currentStatusFilter));
+
+  // ── Fix suggestion ────────────────────────────────────────────────────────
+  let fix = '';
+  if (issues.includes('file')) {
+    fix = `<b>⚡ Fix: Open via a local server, not file://</b><br>
+Run in your terminal:<br>
+<code>cd path/to/this/folder</code><br>
+<code>python3 -m http.server 8080</code><br>
+Then open <code>http://localhost:8080</code>`;
+  } else if (issues.includes('cdn')) {
+    fix = `<b>⚡ Fix: No internet / CDN blocked</b><br>
+Check your internet connection. The page loads Supabase JS from unpkg.com — make sure that's not blocked by a firewall or ad-blocker.`;
+  } else if (issues.includes('rls')) {
+    fix = `<b>⚡ Fix: Supabase Row Level Security (RLS) is blocking reads</b><br>
+Go to your Supabase dashboard → Table Editor → <b>tickets</b> → Policies.<br>
+Add a policy: <b>Allow anon SELECT</b> — or disable RLS on the tickets table.`;
+  } else if (issues.includes('cors')) {
+    fix = `<b>⚡ Fix: Network / CORS error</b><br>
+Supabase URL is set but can't be reached. Check:<br>
+• Your Supabase project is not paused (free tier pauses after inactivity)<br>
+• The URL in HARDCODED_URL is correct<br>
+• No firewall blocking outbound HTTPS`;
+  } else if (issues.includes('table')) {
+    fix = `<b>⚡ Fix: tickets table query failed</b><br>
+Error: <i>${tableErr}</i><br>
+Check that a table named <b>tickets</b> exists in your Supabase project.`;
+  } else if (issues.length === 0 && tickets.length === 0) {
+    fix = `<b>ℹ All checks passed — table is empty</b><br>No job cards have been created yet. Click <b>+ New Job Card</b> to add one.`;
+  }
+
+  render(rows, fix);
+
+  // Auto-hide after 30s if all green
+  if (issues.length === 0 && tickets.length > 0) {
+    setTimeout(() => { if (panel) panel.style.display = 'none'; }, 30000);
+  }
+})();
 </script>
 </body>
 </html>
